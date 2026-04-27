@@ -27,9 +27,9 @@ struct ProviderRegistry {
         environmentBase: [String: String] = ProcessInfo.processInfo.environment) -> [UsageProvider: ProviderSpec]
     {
         var specs: [UsageProvider: ProviderSpec] = [:]
-        specs.reserveCapacity(UsageProvider.allCases.count)
+        specs.reserveCapacity(UsageProvider.monitoredProviders.count)
 
-        for provider in UsageProvider.allCases {
+        for provider in UsageProvider.monitoredProviders {
             let descriptor = ProviderDescriptorRegistry.descriptor(for: provider)
             let meta = metadata[provider]!
             let spec = ProviderSpec(

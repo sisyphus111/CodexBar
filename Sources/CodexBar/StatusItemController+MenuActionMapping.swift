@@ -6,7 +6,6 @@ extension StatusItemController {
         case .installUpdate: (#selector(self.installUpdate), nil)
         case .refresh: (#selector(self.refreshNow), nil)
         case .refreshAugmentSession: (#selector(self.refreshAugmentSession), nil)
-        case .dashboard: (#selector(self.openDashboard), nil)
         case .statusPage: (#selector(self.openStatusPage), nil)
         case .addCodexAccount: (#selector(self.addManagedCodexAccountFromMenu(_:)), nil)
         case let .requestCodexSystemPromotion(managedAccountID):

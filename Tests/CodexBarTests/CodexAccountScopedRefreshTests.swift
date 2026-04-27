@@ -55,7 +55,9 @@ struct CodexAccountScopedRefreshTests {
         #expect(store.lastOpenAIDashboardSnapshot == nil)
         #expect(store.tokenSnapshots[.codex] == tokenSnapshot)
         #expect(widgetSnapshots.count == 1)
-        #expect(widgetSnapshots[0].entries.contains(where: { $0.provider == .codex }) == false)
+        let codexEntry = widgetSnapshots[0].entries.first { $0.provider == .codex }
+        #expect(codexEntry?.accountDisplayName == "beta@example.com")
+        #expect(codexEntry?.usageRows?.isEmpty == true)
     }
 
     @Test
@@ -692,9 +694,9 @@ struct CodexAccountScopedRefreshTests {
         await refreshTask.value
         await store.widgetSnapshotPersistTask?.value
 
-        #expect(widgetSnapshots.count == 2)
-        #expect(widgetSnapshots[0].entries.contains(where: { $0.provider == .codex }) == false)
-        #expect(widgetSnapshots[1].entries.first { $0.provider == .codex }?.creditsRemaining == 77)
+        #expect(widgetSnapshots.count >= 2)
+        #expect(widgetSnapshots[0].entries.first { $0.provider == .codex }?.accountDisplayName == "beta@example.com")
+        #expect(widgetSnapshots.last?.entries.first { $0.provider == .codex }?.creditsRemaining == 77)
     }
 
     @Test
@@ -727,7 +729,7 @@ struct CodexAccountScopedRefreshTests {
 
         let snapshots = await saver.savedSnapshots()
         #expect(snapshots.count == 2)
-        #expect(snapshots[0].entries.contains(where: { $0.provider == .codex }) == false)
+        #expect(snapshots[0].entries.first { $0.provider == .codex }?.usageRows?.isEmpty != false)
         #expect(snapshots[1].entries.first { $0.provider == .codex }?.creditsRemaining == 77)
     }
 

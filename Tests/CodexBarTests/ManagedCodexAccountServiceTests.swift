@@ -508,7 +508,8 @@ struct ManagedCodexAccountServiceTests {
             identityReader: StubManagedCodexIdentityReader.emails([]),
             workspaceResolver: StubManagedCodexWorkspaceResolver())
 
-        await #expect(throws: ManagedCodexAccountServiceError.loginFailed) {
+        await #expect(throws: ManagedCodexAccountServiceError.loginFailedResult(
+            CodexLoginRunner.Result(outcome: .failed(status: 1), output: "nope"))) {
             try await service.authenticateManagedAccount()
         }
 

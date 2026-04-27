@@ -100,6 +100,21 @@ struct PathBuilderTests {
     }
 
     @Test
+    func `resolves codex from native app bundle`() {
+        let appBundlePath = "/Applications/Codex.app/Contents/Resources/codex"
+        let fm = MockFileManager(executables: [appBundlePath])
+
+        let resolved = BinaryLocator.resolveCodexBinary(
+            env: [:],
+            loginPATH: nil,
+            commandV: { _, _, _, _ in nil },
+            aliasResolver: { _, _, _, _, _ in nil },
+            fileManager: fm,
+            home: "/home/test")
+        #expect(resolved == appBundlePath)
+    }
+
+    @Test
     func `resolves claude from interactive shell`() {
         let fm = MockFileManager(executables: ["/shell/bin/claude"])
         let commandV: (String, String?, TimeInterval, FileManager) -> String? = { tool, shell, timeout, fileManager in

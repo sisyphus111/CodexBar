@@ -18,7 +18,7 @@ struct ProvidersPane: View {
     @State private var selectedProvider: UsageProvider?
 
     private var providers: [UsageProvider] {
-        self.settings.orderedProviders()
+        self.settings.orderedProviders().filter { UsageProvider.monitoredProviders.contains($0) }
     }
 
     init(
@@ -214,7 +214,8 @@ struct ProvidersPane: View {
             isAuthenticatingManagedAccount: self.managedCodexAccountCoordinator.isAuthenticatingManagedAccount,
             authenticatingManagedAccountID: self.managedCodexAccountCoordinator.authenticatingManagedAccountID,
             isRemovingManagedAccount: self.managedCodexAccountCoordinator.isRemovingManagedAccount,
-            isAuthenticatingLiveAccount: self.isAuthenticatingLiveCodexAccount,
+            isAuthenticatingLiveAccount: self.isAuthenticatingLiveCodexAccount ||
+                self.codexAccountPromotionCoordinator.isAuthenticatingLiveAccount,
             isPromotingSystemAccount: self.codexAccountPromotionCoordinator.isPromotingSystemAccount,
             notice: self.codexAccountsNotice ?? degradedNotice)
     }
@@ -244,6 +245,15 @@ struct ProvidersPane: View {
         guard let state = self.codexAccountsSectionState(for: .codex), state.canAddAccount else {
             return
         }
+        guard CodexLoginRunner.canResolveBinary() else {
+            if let info = CodexLoginAlertPresentation.alertInfo(
+                for: CodexLoginRunner.Result(outcome: .missingBinary, output: ""))
+            {
+                self.codexAccountsNotice = CodexAccountsSectionNotice(text: info.message, tone: .warning)
+                self.presentLoginAlert(title: info.title, message: info.message)
+            }
+            return
+        }
 
         do {
             let account = try await self.managedCodexAccountCoordinator.authenticateManagedAccount()
@@ -258,6 +268,15 @@ struct ProvidersPane: View {
         self.codexAccountsNotice = nil
         if let accountID = account.storedAccountID {
             guard let state = self.codexAccountsSectionState(for: .codex), state.canReauthenticate(account) else {
+                return
+            }
+            guard CodexLoginRunner.canResolveBinary() else {
+                if let info = CodexLoginAlertPresentation.alertInfo(
+                    for: CodexLoginRunner.Result(outcome: .missingBinary, output: ""))
+                {
+                    self.codexAccountsNotice = CodexAccountsSectionNotice(text: info.message, tone: .warning)
+                    self.presentLoginAlert(title: info.title, message: info.message)
+                }
                 return
             }
             do {
@@ -608,6 +627,9 @@ struct ProvidersPane: View {
             let message = switch error {
             case .loginFailed:
                 "Managed Codex login did not complete. Try again after finishing the browser login flow."
+            case let .loginFailedResult(result):
+                CodexLoginAlertPresentation.alertInfo(for: result)?.message
+                    ?? "Managed Codex login did not complete. Try again after finishing the browser login flow."
             case .missingEmail:
                 "Codex login completed, but no account email was available. Try again after confirming "
                     + "the account is fully signed in."
@@ -631,7 +653,7 @@ struct ProvidersPane: View {
     }
 
     private func runSettingsDidBecomeActiveHooks() {
-        for provider in UsageProvider.allCases {
+        for provider in UsageProvider.monitoredProviders {
             for toggle in self.extraSettingsToggles(for: provider) {
                 guard let hook = toggle.onAppDidBecomeActive else { continue }
                 Task { @MainActor in

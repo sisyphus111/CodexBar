@@ -730,7 +730,7 @@ extension UsageMenuCardView.Model {
             metadata: input.metadata)
         let metrics = Self.metrics(input: input)
         let usageNotes = Self.usageNotes(input: input)
-        let creditsText: String? = if input.provider == .openrouter {
+        let creditsText: String? = if input.provider == .openrouter || input.provider == .codex {
             nil
         } else if input.codexProjection != nil, !input.showOptionalCreditsAndExtraUsage {
             nil

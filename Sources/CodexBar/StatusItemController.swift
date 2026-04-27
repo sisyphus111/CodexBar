@@ -85,8 +85,6 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
         didSet { self.refreshMenusForLoginStateChange() }
     }
 
-    var creditsPurchaseWindow: OpenAICreditsPurchaseWindowController?
-
     var activeLoginProvider: UsageProvider? {
         didSet {
             if oldValue != self.activeLoginProvider {
@@ -597,6 +595,9 @@ final class StatusItemController: NSObject, NSMenuDelegate, StatusItemControllin
     }
 
     func switchAccountSubtitle(for target: UsageProvider) -> String? {
+        if target == .codex, self.codexAccountPromotionCoordinator.isInteractionBlocked() {
+            return "Codex account change in progress…"
+        }
         guard self.loginTask != nil, let provider = self.activeLoginProvider, provider == target else { return nil }
         let base: String
         switch self.loginPhase {

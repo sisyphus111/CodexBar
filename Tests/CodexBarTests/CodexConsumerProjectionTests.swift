@@ -45,7 +45,6 @@ struct CodexConsumerProjectionTests {
         #expect(projection.supplementalMetrics == [.codeReview])
         #expect(projection.remainingPercent(for: .codeReview) == 88)
         #expect(projection.credits?.remaining == 42)
-        #expect(projection.canShowBuyCredits)
         #expect(projection.hasUsageBreakdown)
         #expect(projection.hasCreditsHistory)
     }
@@ -84,7 +83,6 @@ struct CodexConsumerProjectionTests {
 
         #expect(projection.dashboardVisibility == .displayOnly)
         #expect(projection.supplementalMetrics.isEmpty)
-        #expect(projection.canShowBuyCredits)
         #expect(!projection.hasUsageBreakdown)
         #expect(!projection.hasCreditsHistory)
     }
@@ -137,7 +135,6 @@ struct CodexConsumerProjectionTests {
         #expect(projection.dashboardVisibility == .hidden)
         #expect(projection.credits == nil)
         #expect(projection.supplementalMetrics.isEmpty)
-        #expect(!projection.canShowBuyCredits)
         #expect(!projection.hasUsageBreakdown)
         #expect(!projection.hasCreditsHistory)
         #expect(projection.userFacingErrors.usage == "Override error")
@@ -172,7 +169,7 @@ struct CodexConsumerProjectionTests {
     }
 
     @Test
-    func `live card projection keeps buy credits available without dashboard purchase URL`() {
+    func `live card projection omits buy credits action`() {
         let store = self.makeStore(suite: "CodexConsumerProjectionTests-buy-credits")
         let now = Date(timeIntervalSince1970: 1_700_000_000)
 
@@ -192,7 +189,7 @@ struct CodexConsumerProjectionTests {
 
         let projection = store.codexConsumerProjection(surface: .liveCard, now: now)
 
-        #expect(projection.canShowBuyCredits)
+        #expect(projection.credits?.remaining == 42)
     }
 
     @Test

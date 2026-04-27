@@ -88,8 +88,21 @@ public enum BinaryLocator {
             loginPATH: loginPATH,
             commandV: commandV,
             aliasResolver: aliasResolver,
+            wellKnownPaths: self.codexWellKnownPaths(home: home),
             fileManager: fileManager,
             home: home)
+    }
+
+    /// Well-known installation paths for the Codex CLI binary.
+    /// Covers npm/Homebrew installs plus the CLI bundled by the native Codex.app.
+    static func codexWellKnownPaths(home: String) -> [String] {
+        [
+            "\(home)/.local/bin/codex",
+            "\(home)/.npm-global/bin/codex",
+            "/opt/homebrew/bin/codex",
+            "/usr/local/bin/codex",
+            "/Applications/Codex.app/Contents/Resources/codex",
+        ]
     }
 
     public static func resolveGeminiBinary(

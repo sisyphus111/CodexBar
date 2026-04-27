@@ -330,7 +330,6 @@ extension StatusItemController {
         let hasUsageBreakdown: Bool
         let hasCreditsHistory: Bool
         let hasCostHistory: Bool
-        let canShowBuyCredits: Bool
         let hasOpenAIWebMenuItems: Bool
     }
 
@@ -353,15 +352,12 @@ extension StatusItemController {
         let hasUsageBreakdown = codexProjection?.hasUsageBreakdown == true
         let hasCostHistory = self.settings.isCostUsageEffectivelyEnabled(for: currentProvider) &&
             (self.store.tokenSnapshot(for: currentProvider)?.daily.isEmpty == false)
-        let canShowBuyCredits = self.settings.showOptionalCreditsAndExtraUsage &&
-            codexProjection?.canShowBuyCredits == true
         let hasOpenAIWebMenuItems = !showAllTokenAccounts &&
             (hasCreditsHistory || hasUsageBreakdown || hasCostHistory)
         return OpenAIWebContext(
             hasUsageBreakdown: hasUsageBreakdown,
             hasCreditsHistory: hasCreditsHistory,
             hasCostHistory: hasCostHistory,
-            canShowBuyCredits: canShowBuyCredits,
             hasOpenAIWebMenuItems: hasOpenAIWebMenuItems)
     }
 
@@ -487,8 +483,7 @@ extension StatusItemController {
             let webItems = OpenAIWebMenuItems(
                 hasUsageBreakdown: context.openAIContext.hasUsageBreakdown,
                 hasCreditsHistory: context.openAIContext.hasCreditsHistory,
-                hasCostHistory: context.openAIContext.hasCostHistory,
-                canShowBuyCredits: context.openAIContext.canShowBuyCredits)
+                hasCostHistory: context.openAIContext.hasCostHistory)
             self.addMenuCardSections(
                 to: menu,
                 model: model,
@@ -502,9 +497,6 @@ extension StatusItemController {
             UsageMenuCardView(model: model, width: context.menuWidth),
             id: "menuCard",
             width: context.menuWidth))
-        if context.openAIContext.canShowBuyCredits {
-            menu.addItem(self.makeBuyCreditsItem())
-        }
         menu.addItem(.separator())
         return false
     }
@@ -828,13 +820,8 @@ extension StatusItemController {
             showSwitcher: !showAll)
     }
 
-    private func codexAccountMenuDisplay(for provider: UsageProvider) -> CodexAccountMenuDisplay? {
-        guard provider == .codex else { return nil }
-        let projection = self.settings.codexVisibleAccountProjection
-        guard projection.visibleAccounts.count > 1 else { return nil }
-        return CodexAccountMenuDisplay(
-            accounts: projection.visibleAccounts,
-            activeVisibleAccountID: projection.activeVisibleAccountID)
+    private func codexAccountMenuDisplay(for _: UsageProvider) -> CodexAccountMenuDisplay? {
+        return nil
     }
 
     private func menuNeedsRefresh(_ menu: NSMenu) -> Bool {
@@ -1107,9 +1094,6 @@ extension StatusItemController {
                 id: "menuCardCredits",
                 width: width,
                 submenu: creditsSubmenu))
-            if webItems.canShowBuyCredits {
-                menu.addItem(self.makeBuyCreditsItem())
-            }
         }
         if hasExtraUsage {
             if hasCredits {
@@ -1201,17 +1185,6 @@ extension StatusItemController {
             statusIndicator: indicator)
         image.isTemplate = true
         return image
-    }
-
-    private func makeBuyCreditsItem() -> NSMenuItem {
-        let item = NSMenuItem(title: "Buy Credits...", action: #selector(self.openCreditsPurchase), keyEquivalent: "")
-        item.target = self
-        if let image = NSImage(systemSymbolName: "plus.circle", accessibilityDescription: nil) {
-            image.isTemplate = true
-            image.size = NSSize(width: 16, height: 16)
-            item.image = image
-        }
-        return item
     }
 
     @discardableResult

@@ -43,7 +43,6 @@ struct OpenAIWebMenuItems {
     let hasUsageBreakdown: Bool
     let hasCreditsHistory: Bool
     let hasCostHistory: Bool
-    let canShowBuyCredits: Bool
 }
 
 struct TokenAccountMenuDisplay {

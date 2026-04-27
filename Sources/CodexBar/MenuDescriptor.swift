@@ -30,7 +30,6 @@ struct MenuDescriptor {
 
     enum MenuActionSystemImage: String {
         case refresh = "arrow.clockwise"
-        case dashboard = "chart.bar"
         case statusPage = "waveform.path.ecg"
         case addAccount = "plus"
         case systemAccount = "person.crop.circle"
@@ -53,7 +52,6 @@ struct MenuDescriptor {
         case installUpdate
         case refresh
         case refreshAugmentSession
-        case dashboard
         case statusPage
         case addCodexAccount
         case requestCodexSystemPromotion(UUID)
@@ -386,9 +384,6 @@ struct MenuDescriptor {
                 .appendActionMenuEntries(context: actionContext, entries: &entries)
         }
 
-        if metadata?.dashboardURL != nil {
-            entries.append(.action("Usage Dashboard", .dashboard))
-        }
         if metadata?.statusPageURL != nil || metadata?.statusLinkURL != nil {
             entries.append(.action("Status Page", .statusPage))
         }
@@ -499,7 +494,6 @@ extension MenuDescriptor.MenuAction {
             nil
         case .refresh: MenuDescriptor.MenuActionSystemImage.refresh.rawValue
         case .refreshAugmentSession: MenuDescriptor.MenuActionSystemImage.refresh.rawValue
-        case .dashboard: MenuDescriptor.MenuActionSystemImage.dashboard.rawValue
         case .statusPage: MenuDescriptor.MenuActionSystemImage.statusPage.rawValue
         case .addCodexAccount: MenuDescriptor.MenuActionSystemImage.addAccount.rawValue
         case .requestCodexSystemPromotion:

@@ -696,7 +696,7 @@ struct SettingsStoreTests {
     }
 
     @Test
-    func `infers open AI web access enabled for legacy configured codex cookies`() throws {
+    func `legacy configured codex cookies no longer enable open AI web access`() throws {
         let suite = "SettingsStoreTests-openai-web-legacy"
         let defaults = try #require(UserDefaults(suiteName: suite))
         defaults.removePersistentDomain(forName: suite)
@@ -713,15 +713,15 @@ struct SettingsStoreTests {
             zaiTokenStore: NoopZaiTokenStore(),
             syntheticTokenStore: NoopSyntheticTokenStore())
 
-        #expect(store.openAIWebAccessEnabled == true)
-        #expect(defaults.bool(forKey: "openAIWebAccessEnabled") == true)
+        #expect(store.openAIWebAccessEnabled == false)
+        #expect(defaults.bool(forKey: "openAIWebAccessEnabled") == false)
         #expect(store.openAIWebBatterySaverEnabled == false)
         #expect(defaults.bool(forKey: "openAIWebBatterySaverEnabled") == false)
-        #expect(store.codexCookieSource == .auto)
+        #expect(store.codexCookieSource == .off)
     }
 
     @Test
-    func `infers open AI web access enabled for legacy codex config with implicit auto cookies`() throws {
+    func `legacy implicit codex config no longer enables open AI web access`() throws {
         let suite = "SettingsStoreTests-openai-web-legacy-implicit-auto"
         let defaults = try #require(UserDefaults(suiteName: suite))
         defaults.removePersistentDomain(forName: suite)
@@ -738,11 +738,11 @@ struct SettingsStoreTests {
             zaiTokenStore: NoopZaiTokenStore(),
             syntheticTokenStore: NoopSyntheticTokenStore())
 
-        #expect(store.openAIWebAccessEnabled == true)
-        #expect(defaults.bool(forKey: "openAIWebAccessEnabled") == true)
+        #expect(store.openAIWebAccessEnabled == false)
+        #expect(defaults.bool(forKey: "openAIWebAccessEnabled") == false)
         #expect(store.openAIWebBatterySaverEnabled == false)
         #expect(defaults.bool(forKey: "openAIWebBatterySaverEnabled") == false)
-        #expect(store.codexCookieSource == .auto)
+        #expect(store.codexCookieSource == .off)
     }
 
     @Test

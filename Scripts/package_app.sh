@@ -3,11 +3,16 @@ set -euo pipefail
 CONF=${1:-release}
 ALLOW_LLDB=${CODEXBAR_ALLOW_LLDB:-0}
 SIGNING_MODE=${CODEXBAR_SIGNING:-}
+WIDGET_PRODUCT=${CODEXBAR_WIDGET_PRODUCT:-CodexBarWidget}
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
 
 # Load version info
 source "$ROOT/version.env"
+EFFECTIVE_BUILD_NUMBER="$BUILD_NUMBER"
+if [[ "$SIGNING_MODE" == "adhoc" ]]; then
+  EFFECTIVE_BUILD_NUMBER="$(date -u +%Y%m%d%H%M%S)"
+fi
 
 # Clean build only when explicitly requested (slower).
 if [[ "${CODEXBAR_FORCE_CLEAN:-0}" == "1" ]]; then
@@ -122,12 +127,12 @@ generate_widget_appintents_metadata() {
 
   host_arch=$(uname -m)
   derived_dir="$ROOT/.build/xcode-widget-metadata-${LOWER_CONF}"
-  build_dir="$derived_dir/Build/Intermediates.noindex/CodexBar.build/${xcode_conf}/CodexBarWidget.build"
+  build_dir="$derived_dir/Build/Intermediates.noindex/CodexBar.build/${xcode_conf}/${WIDGET_PRODUCT}.build"
   object_dir="$build_dir/Objects-normal/${host_arch}"
-  source_file_list="$object_dir/CodexBarWidget.SwiftFileList"
-  const_values_list="$object_dir/CodexBarWidget.SwiftConstValuesFileList"
-  dependency_metadata="$build_dir/CodexBarWidget.DependencyMetadataFileList"
-  static_dependency_metadata="$build_dir/CodexBarWidget.DependencyStaticMetadataFileList"
+  source_file_list="$object_dir/${WIDGET_PRODUCT}.SwiftFileList"
+  const_values_list="$object_dir/${WIDGET_PRODUCT}.SwiftConstValuesFileList"
+  dependency_metadata="$build_dir/${WIDGET_PRODUCT}.DependencyMetadataFileList"
+  static_dependency_metadata="$build_dir/${WIDGET_PRODUCT}.DependencyStaticMetadataFileList"
 
   appintents_tool=$(xcrun --find appintentsmetadataprocessor)
   sdk_root=$(xcrun --sdk macosx --show-sdk-path)
@@ -135,23 +140,25 @@ generate_widget_appintents_metadata() {
   toolchain_dir=$(dirname "$(dirname "$(dirname "$swiftc_path")")")
   xcode_version=$(xcodebuild -version | awk '/Build version/ { print $3 }')
 
-  rm -rf "$derived_dir"
+  if [[ "${CODEXBAR_FORCE_WIDGET_METADATA_CLEAN:-0}" == "1" ]]; then
+    rm -rf "$derived_dir"
+  fi
   xcodebuild \
     -workspace "$ROOT/.swiftpm/xcode/package.xcworkspace" \
-    -scheme CodexBarWidget \
+    -scheme "$WIDGET_PRODUCT" \
     -configuration "$xcode_conf" \
     -destination "platform=macOS,arch=${host_arch}" \
     -derivedDataPath "$derived_dir" \
     build >/dev/null
 
   if [[ ! -f "$source_file_list" ]]; then
-    echo "ERROR: Missing App Intents metadata inputs for CodexBarWidget." >&2
+    echo "ERROR: Missing App Intents metadata inputs for ${WIDGET_PRODUCT}." >&2
     exit 1
   fi
 
   find "$object_dir" -name '*.swiftconstvalues' | sort > "$const_values_list"
   if [[ ! -s "$const_values_list" ]]; then
-    echo "ERROR: Missing App Intents const-values outputs for CodexBarWidget." >&2
+    echo "ERROR: Missing App Intents const-values outputs for ${WIDGET_PRODUCT}." >&2
     exit 1
   fi
   rm -rf "$widget_resources_dir/Metadata.appintents"
@@ -160,7 +167,7 @@ generate_widget_appintents_metadata() {
   "$appintents_tool" \
     --output "$widget_resources_dir" \
     --toolchain-dir "$toolchain_dir" \
-    --module-name CodexBarWidget \
+    --module-name "$WIDGET_PRODUCT" \
     --sdk-root "$sdk_root" \
     --xcode-version "$xcode_version" \
     --platform-family macOS \
@@ -173,7 +180,10 @@ generate_widget_appintents_metadata() {
     --force >/dev/null
 
   if [[ ! -f "$widget_resources_dir/Metadata.appintents/extract.actionsdata" ]]; then
-    echo "ERROR: Failed to generate App Intents metadata for CodexBarWidget." >&2
+    if [[ "${CODEXBAR_ALLOW_EMPTY_WIDGET_METADATA:-0}" == "1" ]]; then
+      return 0
+    fi
+    echo "ERROR: Failed to generate App Intents metadata for ${WIDGET_PRODUCT}." >&2
     exit 1
   fi
 }
@@ -214,10 +224,30 @@ if [[ "$SIGNING_MODE" == "adhoc" ]]; then
   AUTO_CHECKS=false
 fi
 WIDGET_BUNDLE_ID="${BUNDLE_ID}.widget"
-APP_TEAM_ID="${APP_TEAM_ID:-Y5PE65HELJ}"
+resolve_team_id_from_identity() {
+  local identity="${APP_IDENTITY:-}"
+  if [[ -z "$identity" ]]; then
+    return 1
+  fi
+
+  security find-certificate -c "$identity" -p 2>/dev/null \
+    | openssl x509 -noout -subject -nameopt RFC2253 2>/dev/null \
+    | sed -nE 's/.*OU=([^,]+).*/\1/p' \
+    | head -n 1
+}
+
+RESOLVED_TEAM_ID="$(resolve_team_id_from_identity || true)"
+APP_TEAM_ID="${APP_TEAM_ID:-${RESOLVED_TEAM_ID:-Y5PE65HELJ}}"
 APP_GROUP_ID="${APP_TEAM_ID}.com.steipete.codexbar"
 if [[ "$BUNDLE_ID" == *".debug"* ]]; then
   APP_GROUP_ID="${APP_TEAM_ID}.com.steipete.codexbar.debug"
+fi
+ENABLE_APP_GROUPS="${CODEXBAR_ENABLE_APP_GROUPS:-}"
+if [[ -z "$ENABLE_APP_GROUPS" ]]; then
+  ENABLE_APP_GROUPS=0
+  if [[ "$SIGNING_MODE" != "adhoc" ]]; then
+    ENABLE_APP_GROUPS=1
+  fi
 fi
 ENTITLEMENTS_DIR="$ROOT/.build/entitlements"
 APP_ENTITLEMENTS="${ENTITLEMENTS_DIR}/CodexBar.entitlements"
@@ -232,10 +262,18 @@ cat > "$APP_ENTITLEMENTS" <<PLIST
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+$(if [[ "${CODEXBAR_ENABLE_APP_SANDBOX:-0}" == "1" ]]; then cat <<EOF
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+EOF
+fi)
+$(if [[ "$ENABLE_APP_GROUPS" == "1" ]]; then cat <<EOF
     <key>com.apple.security.application-groups</key>
     <array>
         <string>${APP_GROUP_ID}</string>
     </array>
+EOF
+fi)
     $(if [[ "$ALLOW_LLDB" == "1" ]]; then echo "    <key>com.apple.security.get-task-allow</key><true/>"; fi)
 </dict>
 </plist>
@@ -247,10 +285,13 @@ cat > "$WIDGET_ENTITLEMENTS" <<PLIST
 <dict>
     <key>com.apple.security.app-sandbox</key>
     <true/>
+$(if [[ "$ENABLE_APP_GROUPS" == "1" ]]; then cat <<EOF
     <key>com.apple.security.application-groups</key>
     <array>
         <string>${APP_GROUP_ID}</string>
     </array>
+EOF
+fi)
 </dict>
 </plist>
 PLIST
@@ -266,11 +307,16 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>CFBundleDisplayName</key><string>CodexBar</string>
     <key>CFBundleIdentifier</key><string>${BUNDLE_ID}</string>
     <key>CFBundleExecutable</key><string>CodexBar</string>
+    <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>${MARKETING_VERSION}</string>
-    <key>CFBundleVersion</key><string>${BUILD_NUMBER}</string>
+    <key>CFBundleVersion</key><string>${EFFECTIVE_BUILD_NUMBER}</string>
+    <key>CFBundleSupportedPlatforms</key>
+    <array>
+        <string>MacOSX</string>
+    </array>
     <key>LSMinimumSystemVersion</key><string>14.0</string>
-    <key>LSUIElement</key><true/>
+    $(if [[ "${CODEXBAR_DISABLE_LSUIELEMENT:-0}" != "1" ]]; then echo '<key>LSUIElement</key><true/>'; fi)
     <key>CFBundleIconFile</key><string>Icon</string>
     <key>NSHumanReadableCopyright</key><string>© 2026 Peter Steinberger. MIT License.</string>
     <key>SUFeedURL</key><string>${FEED_URL}</string>
@@ -358,7 +404,7 @@ fi
 if [[ -n "$(resolve_binary_path "CodexBarClaudeWatchdog" "${ARCH_LIST[0]}")" ]]; then
   install_binary "CodexBarClaudeWatchdog" "$APP/Contents/Helpers/CodexBarClaudeWatchdog"
 fi
-if [[ -n "$(resolve_binary_path "CodexBarWidget" "${ARCH_LIST[0]}")" ]]; then
+if [[ -n "$(resolve_binary_path "$WIDGET_PRODUCT" "${ARCH_LIST[0]}")" ]]; then
   WIDGET_APP="$APP/Contents/PlugIns/CodexBarWidget.appex"
   mkdir -p "$WIDGET_APP/Contents/MacOS" "$WIDGET_APP/Contents/Resources"
   cat > "$WIDGET_APP/Contents/Info.plist" <<PLIST
@@ -366,25 +412,49 @@ if [[ -n "$(resolve_binary_path "CodexBarWidget" "${ARCH_LIST[0]}")" ]]; then
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleName</key><string>CodexBarWidget</string>
+    <key>CFBundleName</key><string>${WIDGET_PRODUCT}</string>
     <key>CFBundleDisplayName</key><string>CodexBar</string>
     <key>CFBundleIdentifier</key><string>${WIDGET_BUNDLE_ID}</string>
-    <key>CFBundleExecutable</key><string>CodexBarWidget</string>
+    <key>CFBundleExecutable</key><string>${WIDGET_PRODUCT}</string>
+    <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
     <key>CFBundlePackageType</key><string>XPC!</string>
     <key>CFBundleShortVersionString</key><string>${MARKETING_VERSION}</string>
-    <key>CFBundleVersion</key><string>${BUILD_NUMBER}</string>
+    <key>CFBundleVersion</key><string>${EFFECTIVE_BUILD_NUMBER}</string>
+    <key>CFBundleSupportedPlatforms</key>
+    <array>
+        <string>MacOSX</string>
+    </array>
     <key>LSMinimumSystemVersion</key><string>14.0</string>
     <key>CodexBarTeamID</key><string>${APP_TEAM_ID}</string>
     <key>NSExtension</key>
     <dict>
+        <key>NSExtensionAttributes</key>
+        <dict>
+            <key>WKAppBundleIdentifier</key><string>${BUNDLE_ID}</string>
+        </dict>
         <key>NSExtensionPointIdentifier</key><string>com.apple.widgetkit-extension</string>
-        <key>NSExtensionPrincipalClass</key><string>CodexBarWidget.CodexBarWidgetBundle</string>
     </dict>
 </dict>
 </plist>
 PLIST
-  install_binary "CodexBarWidget" "$WIDGET_APP/Contents/MacOS/CodexBarWidget"
+  install_binary "$WIDGET_PRODUCT" "$WIDGET_APP/Contents/MacOS/$WIDGET_PRODUCT"
   generate_widget_appintents_metadata "$WIDGET_APP/Contents/Resources"
+fi
+
+if [[ "${CODEXBAR_USE_NATIVE_WIDGET:-1}" == "1" ]]; then
+  ruby "$ROOT/Scripts/generate_widget_xcodeproj.rb"
+  xcodebuild \
+    -project "$ROOT/CodexBarWidgetNative.xcodeproj" \
+    -target CodexBarWidget \
+    -configuration Release \
+    WK_APP_BUNDLE_IDENTIFIER="$BUNDLE_ID" \
+    CODE_SIGNING_ALLOWED=NO \
+    build >/dev/null
+  WIDGET_APP="$APP/Contents/PlugIns/CodexBarWidget.appex"
+  rm -rf "$WIDGET_APP"
+  ditto "$ROOT/build/Release/CodexBarWidget.appex" "$WIDGET_APP"
+  /usr/libexec/PlistBuddy -c "Delete :CodexBarTeamID" "$WIDGET_APP/Contents/Info.plist" >/dev/null 2>&1 || true
+  /usr/libexec/PlistBuddy -c "Add :CodexBarTeamID string ${APP_TEAM_ID}" "$WIDGET_APP/Contents/Info.plist"
 fi
 # Embed Sparkle.framework
 if [[ -d ".build/$CONF/Sparkle.framework" ]]; then
@@ -469,7 +539,7 @@ fi
 if [[ -d "${APP}/Contents/PlugIns/CodexBarWidget.appex" ]]; then
   codesign "${CODESIGN_ARGS[@]}" \
     --entitlements "$WIDGET_ENTITLEMENTS" \
-    "$APP/Contents/PlugIns/CodexBarWidget.appex/Contents/MacOS/CodexBarWidget"
+    "$APP/Contents/PlugIns/CodexBarWidget.appex/Contents/MacOS/$WIDGET_PRODUCT"
   codesign "${CODESIGN_ARGS[@]}" \
     --entitlements "$WIDGET_ENTITLEMENTS" \
     "$APP/Contents/PlugIns/CodexBarWidget.appex"

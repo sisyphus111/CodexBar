@@ -29,6 +29,7 @@ extension UsageStore {
         _ = self.statuses
         _ = self.probeLogs
         _ = self.historicalPaceRevision
+        _ = self.codexAccountUsageSnapshots
         return 0
     }
 
@@ -44,6 +45,7 @@ extension UsageStore {
         _ = self.refreshingProviders
         _ = self.statuses
         _ = self.historicalPaceRevision
+        _ = self.codexAccountUsageSnapshots
         return 0
     }
 
@@ -142,6 +144,7 @@ final class UsageStore {
     var statuses: [UsageProvider: ProviderStatus] = [:]
     var probeLogs: [UsageProvider: String] = [:]
     var historicalPaceRevision: Int = 0
+    var codexAccountUsageSnapshots: [String: CodexAccountUsageSnapshot] = [:]
     @ObservationIgnored var lastCreditsSnapshot: CreditsSnapshot?
     @ObservationIgnored var lastCreditsSnapshotAccountKey: String?
     @ObservationIgnored var lastCreditsSource: CodexCreditsSource = .none
@@ -523,6 +526,7 @@ final class UsageStore {
                 await self.refreshCreditsIfNeeded(minimumSnapshotUpdatedAt: refreshStartedAt)
             }
 
+            await self.refreshAllCodexAccountsForMonitoring()
             self.persistWidgetSnapshot(reason: "refresh")
         }
     }

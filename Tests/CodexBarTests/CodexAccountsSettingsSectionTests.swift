@@ -230,6 +230,31 @@ struct CodexAccountsSettingsSectionTests {
     }
 
     @Test
+    func `codex accounts section disables account login while ambient login is in flight`() throws {
+        let settings = Self.makeSettingsStore(suite: "CodexAccountsSettingsSectionTests-ambient-in-flight")
+        let store = Self.makeUsageStore(settings: settings)
+        settings._test_liveSystemCodexAccount = ObservedSystemCodexAccount(
+            email: "live@example.com",
+            codexHomePath: "/Users/test/.codex",
+            observedAt: Date())
+        let coordinator = CodexAccountPromotionCoordinator(
+            settingsStore: settings,
+            usageStore: store)
+        coordinator.setLiveReauthenticationInProgress(true)
+
+        let pane = ProvidersPane(
+            settings: settings,
+            store: store,
+            codexAccountPromotionCoordinator: coordinator)
+        let state = try #require(pane._test_codexAccountsSectionState())
+        let visibleAccount = try #require(state.visibleAccounts.first)
+
+        #expect(state.isAuthenticatingLiveAccount)
+        #expect(state.canAddAccount == false)
+        #expect(state.canReauthenticate(visibleAccount) == false)
+    }
+
+    @Test
     func `adding managed codex account auto selects the merged live row`() async throws {
         let settings = Self.makeSettingsStore(suite: "CodexAccountsSettingsSectionTests-add-merged")
         let store = Self.makeUsageStore(settings: settings)

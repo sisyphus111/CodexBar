@@ -21,7 +21,7 @@ struct CodexUIErrorMapper {
         }
 
         if lower.contains("frame load interrupted") {
-            return "OpenAI web refresh was interrupted. Refresh OpenAI cookies and try again."
+            return "OpenAI web refresh was interrupted. OpenAI web extras are no longer configurable in Settings."
         }
 
         if self.looksInternalTransport(lower: lower) {
@@ -153,7 +153,6 @@ struct CodexConsumerProjection {
     let credits: CreditsProjection?
     let menuBarFallback: MenuBarFallback
     let userFacingErrors: UserFacingErrors
-    let canShowBuyCredits: Bool
     let hasUsageBreakdown: Bool
     let hasCreditsHistory: Bool
 
@@ -194,7 +193,6 @@ struct CodexConsumerProjection {
             []
         }
 
-        let canShowBuyCredits = surface == .liveCard
         let hasUsageBreakdown = surface == .liveCard
             && dashboardVisibility == .attached
             && !(dashboard?.usageBreakdown ?? []).isEmpty
@@ -212,7 +210,6 @@ struct CodexConsumerProjection {
                 creditsRemaining: creditsProjection?.remaining,
                 rateWindowsByLane: rateWindowsByLane),
             userFacingErrors: userFacingErrors,
-            canShowBuyCredits: canShowBuyCredits,
             hasUsageBreakdown: hasUsageBreakdown,
             hasCreditsHistory: hasCreditsHistory,
             rateWindowsByLane: rateWindowsByLane,

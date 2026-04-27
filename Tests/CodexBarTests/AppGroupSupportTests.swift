@@ -32,6 +32,32 @@ struct AppGroupSupportTests {
     }
 
     @Test
+    func `local fallback stores snapshots in widget container`() {
+        let root = URL(fileURLWithPath: "/tmp/CodexBarHome", isDirectory: true)
+        let releaseURL = AppGroupSupport.snapshotURL(
+            bundleID: "com.steipete.codexbar",
+            homeDirectory: root)
+        let debugURL = AppGroupSupport.snapshotURL(
+            bundleID: "com.steipete.codexbar.debug",
+            homeDirectory: root)
+        let releasePath = [
+            "/tmp/CodexBarHome",
+            "Library/Containers/com.steipete.codexbar.widget",
+            "Data/Library/Application Support/CodexBar",
+            "widget-snapshot.json",
+        ].joined(separator: "/")
+        let debugPath = [
+            "/tmp/CodexBarHome",
+            "Library/Containers/com.steipete.codexbar.debug.widget",
+            "Data/Library/Application Support/CodexBar",
+            "widget-snapshot.json",
+        ].joined(separator: "/")
+
+        #expect(releaseURL.path == releasePath)
+        #expect(debugURL.path == debugPath)
+    }
+
+    @Test
     func `legacy migration copies snapshot once`() throws {
         let fileManager = FileManager.default
         let root = fileManager.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)

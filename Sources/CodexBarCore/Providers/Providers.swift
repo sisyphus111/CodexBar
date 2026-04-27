@@ -32,6 +32,10 @@ public enum UsageProvider: String, CaseIterable, Sendable, Codable {
     case mistral
 }
 
+extension UsageProvider {
+    public static let monitoredProviders: [UsageProvider] = [.codex]
+}
+
 // swiftformat:enable sortDeclarations
 
 public enum IconStyle: Sendable, CaseIterable {

@@ -84,9 +84,12 @@ public enum AppGroupSupport {
         -> URL?
     {
         #if os(macOS)
-        fileManager.containerURL(forSecurityApplicationGroupIdentifier: self.currentGroupID(for: bundleID))
+        guard self.codeSignatureTeamID(bundleURL: Bundle.main.bundleURL) != nil else {
+            return nil
+        }
+        return fileManager.containerURL(forSecurityApplicationGroupIdentifier: self.currentGroupID(for: bundleID))
         #else
-        nil
+        return nil
         #endif
     }
 
@@ -100,18 +103,27 @@ public enum AppGroupSupport {
             return container.appendingPathComponent(self.widgetSnapshotFilename, isDirectory: false)
         }
 
-        let directory = self.localFallbackDirectory(fileManager: fileManager, homeDirectory: homeDirectory)
+        let directory = self.localFallbackDirectory(
+            bundleID: bundleID,
+            fileManager: fileManager,
+            homeDirectory: homeDirectory)
         return directory.appendingPathComponent(self.widgetSnapshotFilename, isDirectory: false)
     }
 
     public static func localFallbackDirectory(
+        bundleID: String? = Bundle.main.bundleIdentifier,
         fileManager: FileManager = .default,
-        homeDirectory _: URL = FileManager.default.homeDirectoryForCurrentUser)
+        homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser)
         -> URL
     {
-        let base = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
-            ?? fileManager.temporaryDirectory
-        let directory = base.appendingPathComponent("CodexBar", isDirectory: true)
+        let directory = homeDirectory
+            .appendingPathComponent("Library", isDirectory: true)
+            .appendingPathComponent("Containers", isDirectory: true)
+            .appendingPathComponent(self.fallbackWidgetBundleID(bundleID: bundleID), isDirectory: true)
+            .appendingPathComponent("Data", isDirectory: true)
+            .appendingPathComponent("Library", isDirectory: true)
+            .appendingPathComponent("Application Support", isDirectory: true)
+            .appendingPathComponent("CodexBar", isDirectory: true)
         try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
         return directory
     }
@@ -214,6 +226,10 @@ public enum AppGroupSupport {
     private static func isDebugBundleID(_ bundleID: String?) -> Bool {
         guard let bundleID, !bundleID.isEmpty else { return false }
         return bundleID.contains(".debug")
+    }
+
+    private static func fallbackWidgetBundleID(bundleID: String? = Bundle.main.bundleIdentifier) -> String {
+        self.isDebugBundleID(bundleID) ? "com.steipete.codexbar.debug.widget" : "com.steipete.codexbar.widget"
     }
 
     private static func codeSignatureTeamID(bundleURL: URL?) -> String? {

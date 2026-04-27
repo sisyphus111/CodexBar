@@ -8,7 +8,7 @@ xcuserdata/
 # Build products
 .build/
 DerivedData
-
+build/
 # Bundles / artifacts
 # Main app bundle (any variation)
 CodexBar.app/

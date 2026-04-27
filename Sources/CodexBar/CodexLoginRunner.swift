@@ -3,8 +3,8 @@ import Darwin
 import Foundation
 
 struct CodexLoginRunner {
-    struct Result {
-        enum Outcome {
+    struct Result: Equatable {
+        enum Outcome: Equatable {
             case success
             case timedOut
             case failed(status: Int32)
@@ -14,6 +14,17 @@ struct CodexLoginRunner {
 
         let outcome: Outcome
         let output: String
+    }
+
+    static func canResolveBinary() -> Bool {
+        var env = ProcessInfo.processInfo.environment
+        env["PATH"] = PathBuilder.effectivePATH(
+            purposes: [.rpc, .tty, .nodeTooling],
+            env: env,
+            loginPATH: LoginShellPathCache.shared.current)
+        return BinaryLocator.resolveCodexBinary(
+            env: env,
+            loginPATH: LoginShellPathCache.shared.current) != nil
     }
 
     static func run(homePath: String? = nil, timeout: TimeInterval = 120) async -> Result {
@@ -69,19 +80,39 @@ struct CodexLoginRunner {
     }
 
     private static func wait(for process: Process, timeout: TimeInterval) async -> Bool {
-        await withTaskGroup(of: Bool.self) { group -> Bool in
-            group.addTask {
-                process.waitUntilExit()
-                return false
+        await withCheckedContinuation { continuation in
+            let signal = ProcessWaitSignal(continuation: continuation)
+
+            process.terminationHandler = { _ in
+                signal.resumeOnce(timedOut: false)
             }
-            group.addTask {
+            if process.isRunning == false {
+                signal.resumeOnce(timedOut: false)
+            }
+
+            Task {
                 let nanos = UInt64(max(0, timeout) * 1_000_000_000)
                 try? await Task.sleep(nanoseconds: nanos)
-                return true
+                signal.resumeOnce(timedOut: true)
             }
-            let result = await group.next() ?? false
-            group.cancelAll()
-            return result
+        }
+    }
+
+    private final class ProcessWaitSignal: @unchecked Sendable {
+        private let lock = NSLock()
+        private var didResume = false
+        private let continuation: CheckedContinuation<Bool, Never>
+
+        init(continuation: CheckedContinuation<Bool, Never>) {
+            self.continuation = continuation
+        }
+
+        func resumeOnce(timedOut: Bool) {
+            self.lock.lock()
+            defer { self.lock.unlock() }
+            guard self.didResume == false else { return }
+            self.didResume = true
+            self.continuation.resume(returning: timedOut)
         }
     }
 

@@ -77,7 +77,7 @@ extension CodexManagedOpenAIWebTests {
         #expect(
             message ==
                 "OpenAI cookies are for rdsarna@gmail.com, not ratulsarna@gmail.com. " +
-                "Switch chatgpt.com account, then refresh OpenAI cookies.")
+                "OpenAI web extras are no longer configurable in Settings.")
     }
 
     func makeSettingsStore(suite: String) -> SettingsStore {

@@ -166,8 +166,7 @@ extension UsageStore {
         await MainActor.run {
             self.lastOpenAIDashboardError = [
                 "OpenAI web access requires a signed-in chatgpt.com session.",
-                "Sign in using \(self.codexBrowserCookieOrder.loginHint), " +
-                    "then update OpenAI cookies in Providers → Codex.",
+                "OpenAI web extras are no longer configurable in Settings.",
             ].joined(separator: " ")
             self.openAIDashboard = self.lastOpenAIDashboardSnapshot
             self.openAIDashboardAttachmentAuthorized = self.lastOpenAIDashboardAttachmentAuthorized
@@ -314,12 +313,15 @@ extension UsageStore {
         case let .wrongEmail(expected, actual):
             [
                 "OpenAI dashboard signed in as \(actual ?? "unknown"), but Codex uses \(expected ?? "unknown").",
-                "Switch accounts in your browser and update OpenAI cookies in Providers → Codex.",
+                "OpenAI web extras are no longer configurable in Settings.",
             ].joined(separator: " ")
         case let .sameEmailAmbiguity(email):
             "OpenAI dashboard ownership is ambiguous for \(email); Codex will not attach dashboard data."
         case .missingDashboardSignedInEmail:
-            "OpenAI dashboard did not report a signed-in account. Refresh OpenAI cookies and try again."
+            [
+                "OpenAI dashboard did not report a signed-in account.",
+                "OpenAI web extras are no longer configurable in Settings.",
+            ].joined(separator: " ")
         case .unresolvedWithoutTrustedEvidence:
             "OpenAI dashboard ownership could not be verified for the active Codex account."
         case .providerAccountMissingScopedEmail:
@@ -723,12 +725,10 @@ extension UsageStore {
         guard let status, !status.isEmpty else { return nil }
 
         if status.localizedCaseInsensitiveContains("openai cookies are for") {
-            return "\(status) Switch chatgpt.com account, then refresh OpenAI cookies."
+            return "\(status) OpenAI web extras are no longer configurable in Settings."
         }
         if status.localizedCaseInsensitiveContains("no signed-in openai web session found") {
-            let targetLabel = targetEmail?.trimmingCharacters(in: .whitespacesAndNewlines)
-            let accountLabel = (targetLabel?.isEmpty == false) ? targetLabel! : "your OpenAI account"
-            return "\(status) Sign in to chatgpt.com as \(accountLabel), then refresh OpenAI cookies."
+            return "\(status) OpenAI web extras are no longer configurable in Settings."
         }
         if status.localizedCaseInsensitiveContains("openai cookie import failed")
             || status.localizedCaseInsensitiveContains("browser cookie import failed")
@@ -810,7 +810,7 @@ extension UsageStore {
         self.openAIDashboardRequiresLogin = true
         self.openAIDashboardCookieImportStatus = [
             "Managed Codex account data is unavailable.",
-            "Fix the managed account store before importing OpenAI cookies.",
+            "Fix the managed account store before refreshing OpenAI web data.",
         ].joined(separator: " ")
         return nil
     }
@@ -829,7 +829,7 @@ extension UsageStore {
         self.openAIDashboardRequiresLogin = true
         self.openAIDashboardCookieImportStatus = [
             "The selected managed Codex account is unavailable.",
-            "Pick another Codex account before importing OpenAI cookies.",
+            "Pick another Codex account before refreshing OpenAI web data.",
         ].joined(separator: " ")
         return nil
     }
@@ -904,8 +904,8 @@ extension UsageStore {
                 switch cookieSource {
                 case .manual:
                     self.settings.ensureCodexCookieLoaded()
-                    // Manual OpenAI cookies still come from one provider-level setting. Auto-imported cookies are
-                    // isolated per managed account, but a manual header is an explicit override owned by settings,
+                    // Manual OpenAI cookies still come from stored provider config. Auto-imported cookies are
+                    // isolated per managed account, but a manual header is an explicit override owned by config,
                     // so switching managed accounts does not currently swap it underneath the user.
                     let manualHeader = self.settings.codexCookieHeader
                     guard CookieHeaderNormalizer.normalize(manualHeader) != nil else {
@@ -1169,7 +1169,7 @@ extension UsageStore {
         if trimmed.isEmpty {
             return [
                 "OpenAI web dashboard returned an empty page.",
-                "Sign in to chatgpt.com and update OpenAI cookies in Providers → Codex.",
+                "OpenAI web extras are no longer configurable in Settings.",
             ].joined(separator: " ")
         }
 
@@ -1184,19 +1184,17 @@ extension UsageStore {
             || lower.contains("continue with microsoft")
 
         guard looksLikePublicLanding || looksLoggedOut else { return nil }
-        let emailLabel = targetEmail?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let targetLabel = (emailLabel?.isEmpty == false) ? emailLabel! : "your OpenAI account"
         if let status, !status.isEmpty {
             if status.contains("cookies do not match Codex account")
                 || status.localizedCaseInsensitiveContains("openai cookies are for")
                 || status.localizedCaseInsensitiveContains("cookie import failed")
             {
-                return "\(status) Switch chatgpt.com account, then refresh OpenAI cookies."
+                return "\(status) OpenAI web extras are no longer configurable in Settings."
             }
         }
         return [
             "OpenAI web dashboard returned a public page (not signed in).",
-            "Sign in to chatgpt.com as \(targetLabel), then update OpenAI cookies in Providers → Codex.",
+            "OpenAI web extras are no longer configurable in Settings.",
         ].joined(separator: " ")
     }
 

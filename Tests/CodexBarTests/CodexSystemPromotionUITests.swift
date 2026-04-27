@@ -75,7 +75,7 @@ struct CodexSystemPromotionUITests {
     }
 
     @Test
-    func `codex menu descriptor includes system account submenu`() throws {
+    func `codex menu descriptor omits system account submenu`() throws {
         let container = try CodexAccountPromotionTestContainer(
             suiteName: "CodexSystemPromotionUITests-menu-descriptor")
         defer { container.tearDown() }
@@ -101,22 +101,14 @@ struct CodexSystemPromotionUITests {
                 service: container.makeService()),
             updateReady: false)
 
-        let submenu = try #require(descriptor.sections
+        let submenu = descriptor.sections
             .flatMap(\.entries)
             .compactMap { entry -> (String, String?, [MenuDescriptor.SubmenuItem])? in
                 guard case let .submenu(title, systemImageName, items) = entry else { return nil }
                 return (title, systemImageName, items)
             }
-            .first(where: { $0.0 == "System Account" }))
+            .first(where: { $0.0 == "System Account" })
 
-        #expect(submenu.1 == MenuDescriptor.MenuActionSystemImage.systemAccount.rawValue)
-        #expect(submenu.2.map(\.title) == ["live@example.com", "managed@example.com"])
-        #expect(submenu.2.count == 2)
-        #expect(submenu.2[0].isChecked)
-        #expect(submenu.2[0].isEnabled == false)
-        #expect(submenu.2[0].action == nil)
-        #expect(submenu.2[1].isChecked == false)
-        #expect(submenu.2[1].isEnabled)
-        #expect(submenu.2[1].action == .requestCodexSystemPromotion(managedAccountID))
+        #expect(submenu == nil)
     }
 }

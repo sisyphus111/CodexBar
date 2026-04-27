@@ -20,6 +20,7 @@ protocol ManagedCodexWorkspaceResolving: Sendable {
 
 enum ManagedCodexAccountServiceError: Error, Equatable {
     case loginFailed
+    case loginFailedResult(CodexLoginRunner.Result)
     case missingEmail
     case unsafeManagedHome(String)
 }
@@ -152,7 +153,9 @@ final class ManagedCodexAccountService {
 
         do {
             let result = await self.loginRunner.run(homePath: homeURL.path, timeout: timeout)
-            guard case .success = result.outcome else { throw ManagedCodexAccountServiceError.loginFailed }
+            guard case .success = result.outcome else {
+                throw ManagedCodexAccountServiceError.loginFailedResult(result)
+            }
 
             let identity = try self.identityReader.loadAccountIdentity(homePath: homeURL.path)
             guard let rawEmail = identity.email?.trimmingCharacters(in: .whitespacesAndNewlines),

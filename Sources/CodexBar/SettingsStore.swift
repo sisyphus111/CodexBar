@@ -141,8 +141,6 @@ final class SettingsStore {
                 ])
         }
 
-        let hasStoredOpenAIWebAccessPreference = userDefaults.object(forKey: "openAIWebAccessEnabled") != nil
-        let hadExistingConfig = (try? configStore.load()) != nil
         let legacyStores = CodexBarConfigMigrator.LegacyStores(
             zaiTokenStore: zaiTokenStore,
             syntheticTokenStore: syntheticTokenStore,
@@ -178,13 +176,8 @@ final class SettingsStore {
         self.ensureAlibabaProviderAutoEnabledIfNeeded()
         self.applyTokenCostDefaultIfNeeded()
         if self.claudeUsageDataSource != .cli { self.claudeWebExtrasEnabled = false }
-        if hasStoredOpenAIWebAccessPreference {
-            self.openAIWebAccessEnabled = self.defaultsState.openAIWebAccessEnabled
-        } else {
-            self.openAIWebAccessEnabled = Self.inferredInitialOpenAIWebAccessEnabled(
-                config: config,
-                hadExistingConfig: hadExistingConfig)
-        }
+        self.openAIWebAccessEnabled = false
+        self.openAIWebBatterySaverEnabled = false
         if Self.shouldBridgeSharedDefaults(for: userDefaults) {
             Self.sharedDefaults?.set(self.debugDisableKeychainAccess, forKey: "debugDisableKeychainAccess")
         }
@@ -193,16 +186,6 @@ final class SettingsStore {
 }
 
 extension SettingsStore {
-    private static func inferredInitialOpenAIWebAccessEnabled(
-        config: CodexBarConfig,
-        hadExistingConfig: Bool) -> Bool
-    {
-        guard let codex = config.providerConfig(for: .codex) else { return false }
-        if let cookieSource = codex.cookieSource { return cookieSource.isEnabled }
-        if codex.sanitizedCookieHeader != nil { return true }
-        return hadExistingConfig
-    }
-
     private static func loadDefaultsState(userDefaults: UserDefaults) -> SettingsDefaultsState {
         let refreshDefault = userDefaults.string(forKey: "refreshFrequency")
             .flatMap(RefreshFrequency.init(rawValue:))

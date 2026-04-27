@@ -6,7 +6,6 @@ import SwiftUI
 @ProviderImplementationRegistration
 struct CodexProviderImplementation: ProviderImplementation {
     let id: UsageProvider = .codex
-    let supportsLoginFlow: Bool = true
 
     @MainActor
     func presentation(context _: ProviderPresentationContext) -> ProviderPresentation {
@@ -18,8 +17,6 @@ struct CodexProviderImplementation: ProviderImplementation {
     @MainActor
     func observeSettings(_ settings: SettingsStore) {
         _ = settings.codexUsageDataSource
-        _ = settings.codexCookieSource
-        _ = settings.codexCookieHeader
     }
 
     @MainActor
@@ -59,18 +56,6 @@ struct CodexProviderImplementation: ProviderImplementation {
 
     @MainActor
     func settingsToggles(context: ProviderSettingsContext) -> [ProviderSettingsToggleDescriptor] {
-        let extrasBinding = Binding(
-            get: { context.settings.openAIWebAccessEnabled },
-            set: { enabled in
-                context.settings.openAIWebAccessEnabled = enabled
-                Task { @MainActor in
-                    await context.store.performRuntimeAction(
-                        .openAIWebAccessToggled(enabled),
-                        for: .codex)
-                }
-            })
-        let batterySaverBinding = context.boolBinding(\.openAIWebBatterySaverEnabled)
-
         return [
             ProviderSettingsToggleDescriptor(
                 id: "codex-historical-tracking",
@@ -80,34 +65,6 @@ struct CodexProviderImplementation: ProviderImplementation {
                 statusText: nil,
                 actions: [],
                 isVisible: nil,
-                onChange: nil,
-                onAppDidBecomeActive: nil,
-                onAppearWhenEnabled: nil),
-            ProviderSettingsToggleDescriptor(
-                id: "codex-openai-web-extras",
-                title: "OpenAI web extras",
-                subtitle: [
-                    "Optional.",
-                    "Turn this on to show code review, usage breakdown, and credits history via chatgpt.com.",
-                ].joined(separator: " "),
-                binding: extrasBinding,
-                statusText: nil,
-                actions: [],
-                isVisible: nil,
-                onChange: nil,
-                onAppDidBecomeActive: nil,
-                onAppearWhenEnabled: nil),
-            ProviderSettingsToggleDescriptor(
-                id: "codex-openai-web-battery-saver",
-                title: "Battery Saver",
-                subtitle: [
-                    "Limits background chatgpt.com refreshes to reduce battery and network usage.",
-                    "Dashboard extras may stay stale until you refresh them manually.",
-                ].joined(separator: " "),
-                binding: batterySaverBinding,
-                statusText: nil,
-                actions: [],
-                isVisible: { context.settings.openAIWebAccessEnabled },
                 onChange: nil,
                 onAppDidBecomeActive: nil,
                 onAppearWhenEnabled: nil),
@@ -121,26 +78,8 @@ struct CodexProviderImplementation: ProviderImplementation {
             set: { raw in
                 context.settings.codexUsageDataSource = CodexUsageDataSource(rawValue: raw) ?? .auto
             })
-        let cookieBinding = Binding(
-            get: { context.settings.codexCookieSource.rawValue },
-            set: { raw in
-                context.settings.codexCookieSource = ProviderCookieSource(rawValue: raw) ?? .auto
-            })
-
         let usageOptions = CodexUsageDataSource.allCases.map {
             ProviderSettingsPickerOption(id: $0.rawValue, title: $0.displayName)
-        }
-        let cookieOptions = ProviderCookieSourceUI.options(
-            allowsOff: true,
-            keychainDisabled: context.settings.debugDisableKeychainAccess)
-
-        let cookieSubtitle: () -> String? = {
-            ProviderCookieSourceUI.subtitle(
-                source: context.settings.codexCookieSource,
-                keychainDisabled: context.settings.debugDisableKeychainAccess,
-                auto: "Automatic imports browser cookies for dashboard extras.",
-                manual: "Paste a Cookie header from a chatgpt.com request.",
-                off: "Disable OpenAI dashboard cookie usage.")
         }
 
         return [
@@ -157,94 +96,33 @@ struct CodexProviderImplementation: ProviderImplementation {
                     let label = context.store.sourceLabel(for: .codex)
                     return label == "auto" ? nil : label
                 }),
-            ProviderSettingsPickerDescriptor(
-                id: "codex-cookie-source",
-                title: "OpenAI cookies",
-                subtitle: "Automatic imports browser cookies for dashboard extras.",
-                dynamicSubtitle: cookieSubtitle,
-                binding: cookieBinding,
-                options: cookieOptions,
-                isVisible: { context.settings.openAIWebAccessEnabled },
-                onChange: nil,
-                trailingText: {
-                    guard let entry = CookieHeaderCache.load(provider: .codex) else { return nil }
-                    let when = entry.storedAt.relativeDescription()
-                    return "Cached: \(entry.sourceLabel) • \(when)"
-                }),
         ]
     }
 
     @MainActor
     func settingsFields(context: ProviderSettingsContext) -> [ProviderSettingsFieldDescriptor] {
-        [
-            ProviderSettingsFieldDescriptor(
-                id: "codex-cookie-header",
-                title: "",
-                subtitle: "",
-                kind: .secure,
-                placeholder: "Cookie: …",
-                binding: context.stringBinding(\.codexCookieHeader),
-                actions: [],
-                isVisible: {
-                    context.settings.codexCookieSource == .manual
-                },
-                onActivate: { context.settings.ensureCodexCookieLoaded() }),
-        ]
+        []
     }
 
     @MainActor
     func appendUsageMenuEntries(context: ProviderMenuUsageContext, entries: inout [ProviderMenuEntry]) {
-        guard context.settings.showOptionalCreditsAndExtraUsage,
-              context.metadata.supportsCredits
-        else { return }
-
-        if let credits = context.store.credits {
-            entries.append(.text("Credits: \(UsageFormatter.creditsString(from: credits.remaining))", .primary))
-            if let latest = credits.events.first {
-                entries.append(.text("Last spend: \(UsageFormatter.creditEventSummary(latest))", .secondary))
+        let accountSnapshots = context.store.codexAccountUsageSnapshots.values
+            .sorted { $0.displayName < $1.displayName }
+        if accountSnapshots.count > 1 {
+            entries.append(.text("Accounts", .headline))
+            for account in accountSnapshots {
+                let remaining = if let percent = account.usage?.primary?.remainingPercent {
+                    String(format: "%.0f%%", percent)
+                } else {
+                    "—"
+                }
+                let suffix = account.error == nil ? remaining : "unavailable"
+                entries.append(.text("\(account.displayName): \(suffix)", .secondary))
             }
-        } else {
-            let hint = context.store.userFacingLastCreditsError ?? context.metadata.creditsHint
-            entries.append(.text(hint, .secondary))
         }
     }
 
     @MainActor
-    func loginMenuAction(context _: ProviderMenuLoginContext)
-        -> (label: String, action: MenuDescriptor.MenuAction)?
-    {
-        ("Add Account...", .addCodexAccount)
-    }
+    func appendActionMenuEntries(context _: ProviderMenuActionContext, entries _: inout [ProviderMenuEntry]) {}
 
-    @MainActor
-    func appendActionMenuEntries(context: ProviderMenuActionContext, entries: inout [ProviderMenuEntry]) {
-        let projection = context.settings.codexVisibleAccountProjection
-        guard !projection.visibleAccounts.isEmpty else { return }
-
-        let isInteractionBlocked = context.codexAccountPromotionCoordinator?.isInteractionBlocked() ?? false
-
-        let submenuItems = projection.visibleAccounts.map { account in
-            let isChecked = account.id == projection.liveVisibleAccountID
-            let isEnabled = !isInteractionBlocked &&
-                !isChecked &&
-                account.storedAccountID != nil
-            let action = account.storedAccountID.map(MenuDescriptor.MenuAction.requestCodexSystemPromotion)
-            return MenuDescriptor.SubmenuItem(
-                title: account.displayName,
-                action: action,
-                isEnabled: isEnabled,
-                isChecked: isChecked)
-        }
-
-        entries.append(.submenu(
-            "System Account",
-            MenuDescriptor.MenuActionSystemImage.systemAccount.rawValue,
-            submenuItems))
-    }
-
-    @MainActor
-    func runLoginFlow(context: ProviderLoginContext) async -> Bool {
-        await context.controller.runCodexLoginFlow()
-        return true
-    }
 }

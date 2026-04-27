@@ -80,25 +80,30 @@ struct StatusMenuTests {
     }
 
     @Test
-    func `alibaba dashboard action follows selected region`() {
+    func `codex account change subtitle reflects in flight work`() {
         self.disableMenuCardsForTesting()
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
-        settings.alibabaCodingPlanAPIRegion = .chinaMainland
 
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
+        let promotionCoordinator = CodexAccountPromotionCoordinator(
+            settingsStore: settings,
+            usageStore: store)
+        promotionCoordinator.setLiveReauthenticationInProgress(true)
         let controller = StatusItemController(
             store: store,
             settings: settings,
             account: fetcher.loadAccountInfo(),
             updater: DisabledUpdaterController(),
             preferencesSelection: PreferencesSelection(),
+            codexAccountPromotionCoordinator: promotionCoordinator,
             statusBar: self.makeStatusBarForTesting())
 
-        #expect(controller.dashboardURL(for: .alibaba) == AlibabaCodingPlanAPIRegion.chinaMainland.dashboardURL)
+        #expect(controller.switchAccountSubtitle(for: .codex) == "Codex account change in progress…")
+        #expect(controller.switchAccountSubtitle(for: .claude) == nil)
     }
 
     @Test
@@ -892,13 +897,11 @@ extension StatusMenuTests {
         #expect(
             usageItem?.submenu?.items
                 .contains { ($0.representedObject as? String) == "usageBreakdownChart" } == true)
-        #expect(
-            creditsItem?.submenu?.items
-                .contains { ($0.representedObject as? String) == "creditsHistoryChart" } == true)
+        #expect(creditsItem == nil)
     }
 
     @Test
-    func `shows credits before cost in codex menu card sections`() throws {
+    func `hides credits section while preserving codex cost menu card section`() throws {
         self.disableMenuCardsForTesting()
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false
@@ -961,9 +964,8 @@ extension StatusMenuTests {
         let ids = menu.items.compactMap { $0.representedObject as? String }
         let creditsIndex = ids.firstIndex(of: "menuCardCredits")
         let costIndex = ids.firstIndex(of: "menuCardCost")
-        #expect(creditsIndex != nil)
+        #expect(creditsIndex == nil)
         #expect(costIndex != nil)
-        #expect(try #require(creditsIndex) < costIndex!)
     }
 
     @Test

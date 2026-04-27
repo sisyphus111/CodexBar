@@ -30,59 +30,6 @@ extension StatusItemController {
         self.updater.checkForUpdates(nil)
     }
 
-    @objc func openDashboard() {
-        let preferred = self.lastMenuProvider
-            ?? (self.store.isEnabled(.codex) ? .codex : self.store.enabledProviders().first)
-
-        let provider = preferred ?? .codex
-        guard let url = self.dashboardURL(for: provider) else { return }
-        NSWorkspace.shared.open(url)
-    }
-
-    func dashboardURL(for provider: UsageProvider) -> URL? {
-        if provider == .alibaba {
-            return self.settings.alibabaCodingPlanAPIRegion.dashboardURL
-        }
-
-        let meta = self.store.metadata(for: provider)
-        let urlString: String? = if provider == .claude, self.store.isClaudeSubscription() {
-            meta.subscriptionDashboardURL ?? meta.dashboardURL
-        } else {
-            meta.dashboardURL
-        }
-
-        guard let urlString else { return nil }
-        return URL(string: urlString)
-    }
-
-    @objc func openCreditsPurchase() {
-        let preferred = self.lastMenuProvider
-            ?? (self.store.isEnabled(.codex) ? .codex : self.store.enabledProviders().first)
-        let provider = preferred ?? .codex
-        guard provider == .codex else { return }
-
-        let dashboardURL = self.store.metadata(for: .codex).dashboardURL
-        let purchaseURL = Self.sanitizedCreditsPurchaseURL(self.store.openAIDashboard?.creditsPurchaseURL)
-        let urlString = purchaseURL ?? dashboardURL
-        guard let urlString,
-              let url = URL(string: urlString) else { return }
-
-        let autoStart = true
-        let accountEmail = self.store.codexAccountEmailForOpenAIDashboard()
-        let controller = self.creditsPurchaseWindow ?? OpenAICreditsPurchaseWindowController()
-        controller.show(purchaseURL: url, accountEmail: accountEmail, autoStartPurchase: autoStart)
-        self.creditsPurchaseWindow = controller
-    }
-
-    private static func sanitizedCreditsPurchaseURL(_ raw: String?) -> String? {
-        guard let raw, let url = URL(string: raw) else { return nil }
-        guard let host = url.host?.lowercased(), host.contains("chatgpt.com") else { return nil }
-        let path = url.path.lowercased()
-        let allowed = ["settings", "usage", "billing", "credits"]
-        guard allowed.contains(where: { path.contains($0) }) else { return nil }
-        return url.absoluteString
-    }
-
     @objc func openStatusPage() {
         let preferred = self.lastMenuProvider
             ?? (self.store.isEnabled(.codex) ? .codex : self.store.enabledProviders().first)
@@ -115,6 +62,10 @@ extension StatusItemController {
                 title: "Managed Codex accounts unavailable",
                 message: "CodexBar could not read managed account storage. " +
                     "Recover the store before adding another account.")
+            return
+        }
+        guard CodexLoginRunner.canResolveBinary() else {
+            self.presentCodexLoginResult(CodexLoginRunner.Result(outcome: .missingBinary, output: ""))
             return
         }
 
@@ -156,6 +107,10 @@ extension StatusItemController {
 
         let rawProvider = sender.representedObject as? String
         let provider = rawProvider.flatMap(UsageProvider.init(rawValue:)) ?? self.lastMenuProvider ?? .codex
+        if provider == .codex, self.codexAccountPromotionCoordinator.isInteractionBlocked() {
+            self.loginLogger.info("Switch Account tap ignored: Codex account change already in-flight")
+            return
+        }
         self.loginLogger.info("Switch Account tapped", metadata: ["provider": provider.rawValue])
 
         self.loginTask = Task { @MainActor [weak self] in
@@ -289,6 +244,9 @@ extension StatusItemController {
             let message = switch error {
             case .loginFailed:
                 "Managed Codex login did not complete. Try again after finishing the browser login flow."
+            case let .loginFailedResult(result):
+                CodexLoginAlertPresentation.alertInfo(for: result)?.message
+                    ?? "Managed Codex login did not complete. Try again after finishing the browser login flow."
             case .missingEmail:
                 "Codex login completed, but no account email was available. " +
                     "Try again after confirming the account is fully signed in."

@@ -82,7 +82,7 @@ struct ProviderSettingsDescriptorTests {
     }
 
     @Test
-    func `codex exposes usage and cookie pickers`() throws {
+    func `codex exposes local usage settings`() throws {
         let suite = "ProviderSettingsDescriptorTests-codex"
         let defaults = try #require(UserDefaults(suiteName: suite))
         defaults.removePersistentDomain(forName: suite)
@@ -119,13 +119,17 @@ struct ProviderSettingsDescriptorTests {
 
         let pickers = CodexProviderImplementation().settingsPickers(context: context)
         let toggles = CodexProviderImplementation().settingsToggles(context: context)
+        let fields = CodexProviderImplementation().settingsFields(context: context)
         #expect(pickers.contains(where: { $0.id == "codex-usage-source" }))
-        #expect(pickers.contains(where: { $0.id == "codex-cookie-source" }))
+        #expect(!pickers.contains(where: { $0.id == "codex-cookie-source" }))
         #expect(toggles.contains(where: { $0.id == "codex-historical-tracking" }))
+        #expect(!toggles.contains(where: { $0.id == "codex-openai-web-extras" }))
+        #expect(!toggles.contains(where: { $0.id == "codex-openai-web-battery-saver" }))
+        #expect(fields.isEmpty)
     }
 
     @Test
-    func `codex exposes open AI web extras toggle as default off opt in`() throws {
+    func `codex settings omit open AI web dashboard controls`() throws {
         let suite = "ProviderSettingsDescriptorTests-codex-openai-toggle"
         let defaults = try #require(UserDefaults(suiteName: suite))
         defaults.removePersistentDomain(forName: suite)
@@ -161,17 +165,13 @@ struct ProviderSettingsDescriptorTests {
             requestConfirmation: { _ in })
 
         let toggles = CodexProviderImplementation().settingsToggles(context: context)
-        let extrasToggle = try #require(toggles.first(where: { $0.id == "codex-openai-web-extras" }))
-        #expect(extrasToggle.binding.wrappedValue == false)
-        #expect(extrasToggle.subtitle.contains("Optional."))
-        #expect(extrasToggle.subtitle.contains("Turn this on"))
+        let pickers = CodexProviderImplementation().settingsPickers(context: context)
+        let fields = CodexProviderImplementation().settingsFields(context: context)
 
-        let batterySaverToggle = try #require(toggles.first(where: { $0.id == "codex-openai-web-battery-saver" }))
-        #expect(batterySaverToggle.binding.wrappedValue == false)
-        #expect(batterySaverToggle.isVisible?() == false)
-
-        settings.openAIWebAccessEnabled = true
-        #expect(batterySaverToggle.isVisible?() == true)
+        #expect(!toggles.contains(where: { $0.id == "codex-openai-web-extras" }))
+        #expect(!toggles.contains(where: { $0.id == "codex-openai-web-battery-saver" }))
+        #expect(!pickers.contains(where: { $0.id == "codex-cookie-source" }))
+        #expect(!fields.contains(where: { $0.id == "codex-cookie-header" }))
     }
 
     @Test

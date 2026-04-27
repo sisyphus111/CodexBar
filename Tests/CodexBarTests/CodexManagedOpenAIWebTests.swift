@@ -836,7 +836,7 @@ struct CodexManagedOpenAIWebTests {
         #expect(
             store.lastOpenAIDashboardError ==
                 "OpenAI cookies are for rdsarna@gmail.com, not ratulsarna@gmail.com. " +
-                "Switch chatgpt.com account, then refresh OpenAI cookies.")
+                "OpenAI web extras are no longer configurable in Settings.")
         #expect(store.openAIDashboard == nil)
     }
 }

@@ -15,6 +15,9 @@ public struct WidgetSnapshot: Codable, Sendable {
 
     public struct ProviderEntry: Codable, Sendable {
         public let provider: UsageProvider
+        public let accountID: String?
+        public let accountDisplayName: String?
+        public let planDisplayName: String?
         public let updatedAt: Date
         public let primary: RateWindow?
         public let secondary: RateWindow?
@@ -24,9 +27,13 @@ public struct WidgetSnapshot: Codable, Sendable {
         public let codeReviewRemainingPercent: Double?
         public let tokenUsage: TokenUsageSummary?
         public let dailyUsage: [DailyUsagePoint]
+        public let error: String?
 
         public init(
             provider: UsageProvider,
+            accountID: String? = nil,
+            accountDisplayName: String? = nil,
+            planDisplayName: String? = nil,
             updatedAt: Date,
             primary: RateWindow?,
             secondary: RateWindow?,
@@ -35,9 +42,13 @@ public struct WidgetSnapshot: Codable, Sendable {
             creditsRemaining: Double?,
             codeReviewRemainingPercent: Double?,
             tokenUsage: TokenUsageSummary?,
-            dailyUsage: [DailyUsagePoint])
+            dailyUsage: [DailyUsagePoint],
+            error: String? = nil)
         {
             self.provider = provider
+            self.accountID = accountID
+            self.accountDisplayName = accountDisplayName
+            self.planDisplayName = planDisplayName
             self.updatedAt = updatedAt
             self.primary = primary
             self.secondary = secondary
@@ -47,6 +58,7 @@ public struct WidgetSnapshot: Codable, Sendable {
             self.codeReviewRemainingPercent = codeReviewRemainingPercent
             self.tokenUsage = tokenUsage
             self.dailyUsage = dailyUsage
+            self.error = error
         }
     }
 
@@ -123,17 +135,36 @@ public enum WidgetSnapshotStore {
     }
 
     public static func save(_ snapshot: WidgetSnapshot, bundleID: String? = Bundle.main.bundleIdentifier) {
-        let url = self.snapshotURL(bundleID: bundleID)
+        let urls = self.saveURLs(bundleID: bundleID)
+        let data: Data
         do {
-            let data = try self.encoder.encode(snapshot)
-            try data.write(to: url, options: [.atomic])
+            data = try self.encoder.encode(snapshot)
         } catch {
             return
+        }
+
+        for url in urls {
+            do {
+                try FileManager.default.createDirectory(
+                    at: url.deletingLastPathComponent(),
+                    withIntermediateDirectories: true)
+                try data.write(to: url, options: [.atomic])
+            } catch {
+                continue
+            }
         }
     }
 
     private static func snapshotURL(bundleID: String?) -> URL {
         AppGroupSupport.snapshotURL(bundleID: bundleID)
+    }
+
+    private static func saveURLs(bundleID: String?) -> [URL] {
+        let primaryURL = self.snapshotURL(bundleID: bundleID)
+        let fallbackURL = AppGroupSupport.localFallbackDirectory(bundleID: bundleID)
+            .appendingPathComponent(self.filename, isDirectory: false)
+        var seen = Set<String>()
+        return [primaryURL, fallbackURL].filter { seen.insert($0.path).inserted }
     }
 
     public static func appGroupID(for bundleID: String?) -> String? {
@@ -150,27 +181,5 @@ public enum WidgetSnapshotStore {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         return decoder
-    }
-}
-
-public enum WidgetSelectionStore {
-    private static let selectedProviderKey = "widgetSelectedProvider"
-
-    public static func loadSelectedProvider(bundleID: String? = Bundle.main.bundleIdentifier) -> UsageProvider? {
-        let defaults = self.sharedDefaults(bundleID: bundleID)
-        guard let raw = defaults.string(forKey: self.selectedProviderKey) else { return nil }
-        return UsageProvider(rawValue: raw)
-    }
-
-    public static func saveSelectedProvider(
-        _ provider: UsageProvider,
-        bundleID: String? = Bundle.main.bundleIdentifier)
-    {
-        let defaults = self.sharedDefaults(bundleID: bundleID)
-        defaults.set(provider.rawValue, forKey: self.selectedProviderKey)
-    }
-
-    private static func sharedDefaults(bundleID: String?) -> UserDefaults {
-        AppGroupSupport.sharedDefaults(bundleID: bundleID) ?? .standard
     }
 }

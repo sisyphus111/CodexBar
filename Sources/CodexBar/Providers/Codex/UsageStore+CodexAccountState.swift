@@ -49,6 +49,7 @@ extension UsageStore {
             phaseDidChange?(.credits)
         }
 
+        await self.refreshAllCodexAccountsForMonitoring()
         self.persistWidgetSnapshot(reason: "codex-account-refresh")
         phaseDidChange?(.completed)
     }

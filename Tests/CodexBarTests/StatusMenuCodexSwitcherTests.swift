@@ -89,7 +89,7 @@ struct StatusMenuCodexSwitcherTests {
     }
 
     @Test
-    func `codex menu shows account switcher and add account action for multiple visible accounts`() throws {
+    func `codex menu omits sign in action for multiple visible accounts`() throws {
         self.disableMenuCardsForTesting()
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false
@@ -132,7 +132,8 @@ struct StatusMenuCodexSwitcherTests {
         #expect(projection.visibleAccounts.map(\.email) == ["live@example.com", "managed@example.com"])
         #expect(projection.activeVisibleAccountID == "live@example.com")
         let actionLabels = self.actionLabels(in: descriptor)
-        #expect(actionLabels.contains("Add Account..."))
+        #expect(actionLabels.contains("Sign in to Codex...") == false)
+        #expect(actionLabels.contains("Add Account...") == false)
         #expect(actionLabels.contains("Switch Account...") == false)
     }
 
@@ -160,7 +161,8 @@ struct StatusMenuCodexSwitcherTests {
             updateReady: false)
 
         #expect(settings.codexVisibleAccountProjection.visibleAccounts.map(\.email) == ["solo@example.com"])
-        #expect(self.actionLabels(in: descriptor).contains("Add Account..."))
+        #expect(self.actionLabels(in: descriptor).contains("Sign in to Codex...") == false)
+        #expect(self.actionLabels(in: descriptor).contains("Add Account...") == false)
     }
 
     @Test

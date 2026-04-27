@@ -56,12 +56,12 @@ struct CodexUserFacingErrorTests {
         let store = self.makeUsageStore(suite: "CodexUserFacingErrorTests-browser-mismatch")
         store.lastOpenAIDashboardError =
             "OpenAI cookies are for ratulsarna@gmail.com, not rdsarna@gmail.com. "
-                + "Switch chatgpt.com account, then refresh OpenAI cookies."
+                + "OpenAI web extras are no longer configurable in Settings."
 
         #expect(
             store.userFacingLastOpenAIDashboardError ==
                 "OpenAI cookies are for ratulsarna@gmail.com, not rdsarna@gmail.com. "
-                + "Switch chatgpt.com account, then refresh OpenAI cookies.")
+                + "OpenAI web extras are no longer configurable in Settings.")
     }
 
     @Test
@@ -71,7 +71,7 @@ struct CodexUserFacingErrorTests {
 
         #expect(
             store.userFacingLastOpenAIDashboardError ==
-                "OpenAI web refresh was interrupted. Refresh OpenAI cookies and try again.")
+                "OpenAI web refresh was interrupted. OpenAI web extras are no longer configurable in Settings.")
     }
 
     @Test
@@ -101,12 +101,11 @@ struct CodexUserFacingErrorTests {
         #expect(model.subtitleText == "Codex usage is temporarily unavailable. Try refreshing.")
         #expect(
             model.creditsHintText ==
-                "OpenAI web refresh was interrupted. Refresh OpenAI cookies and try again.")
+                "OpenAI web refresh was interrupted. OpenAI web extras are no longer configurable in Settings.")
         #expect(
             model.creditsHintCopyText ==
-                "OpenAI web refresh was interrupted. Refresh OpenAI cookies and try again.")
-        #expect(
-            model.creditsText == "Codex usage is temporarily unavailable. Try refreshing. Cached values from 1m ago.")
+                "OpenAI web refresh was interrupted. OpenAI web extras are no longer configurable in Settings.")
+        #expect(model.creditsText == nil)
     }
 
     @Test
