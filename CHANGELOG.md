@@ -17,6 +17,7 @@
 - Codex: ignore invalid zero-minute subscription history so the utilization submenu no longer shows duplicate Session tabs.
 - CLI: report the app bundle version correctly when the bundled helper is launched through a symlink.
 - Codex/Claude: clean up cached CLI status probes during app shutdown so `codex -s read-only` workers are not orphaned after restart.
+- Codex: stop falling back from app-server RPC to bare CLI TUI during automatic usage refreshes.
 
 ## 0.22 — 2026-04-21
 
