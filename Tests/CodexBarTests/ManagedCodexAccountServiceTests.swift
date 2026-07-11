@@ -509,7 +509,8 @@ struct ManagedCodexAccountServiceTests {
             workspaceResolver: StubManagedCodexWorkspaceResolver())
 
         await #expect(throws: ManagedCodexAccountServiceError.loginFailedResult(
-            CodexLoginRunner.Result(outcome: .failed(status: 1), output: "nope"))) {
+            CodexLoginRunner.Result(outcome: .failed(status: 1), output: "nope")))
+        {
             try await service.authenticateManagedAccount()
         }
 

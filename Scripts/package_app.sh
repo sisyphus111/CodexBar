@@ -441,21 +441,6 @@ PLIST
   generate_widget_appintents_metadata "$WIDGET_APP/Contents/Resources"
 fi
 
-if [[ "${CODEXBAR_USE_NATIVE_WIDGET:-1}" == "1" ]]; then
-  ruby "$ROOT/Scripts/generate_widget_xcodeproj.rb"
-  xcodebuild \
-    -project "$ROOT/CodexBarWidgetNative.xcodeproj" \
-    -target CodexBarWidget \
-    -configuration Release \
-    WK_APP_BUNDLE_IDENTIFIER="$BUNDLE_ID" \
-    CODE_SIGNING_ALLOWED=NO \
-    build >/dev/null
-  WIDGET_APP="$APP/Contents/PlugIns/CodexBarWidget.appex"
-  rm -rf "$WIDGET_APP"
-  ditto "$ROOT/build/Release/CodexBarWidget.appex" "$WIDGET_APP"
-  /usr/libexec/PlistBuddy -c "Delete :CodexBarTeamID" "$WIDGET_APP/Contents/Info.plist" >/dev/null 2>&1 || true
-  /usr/libexec/PlistBuddy -c "Add :CodexBarTeamID string ${APP_TEAM_ID}" "$WIDGET_APP/Contents/Info.plist"
-fi
 # Embed Sparkle.framework
 if [[ -d ".build/$CONF/Sparkle.framework" ]]; then
   cp -R ".build/$CONF/Sparkle.framework" "$APP/Contents/Frameworks/"

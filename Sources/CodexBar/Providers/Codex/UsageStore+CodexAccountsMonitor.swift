@@ -44,8 +44,8 @@ extension UsageStore {
 
         for account in projection.visibleAccounts {
             if Task.isCancelled { return }
-            let entry = self.mergingPreviousCodexAccountUsageIfNeeded(
-                await self.refreshCodexAccountForMonitoring(account),
+            let entry = await self.mergingPreviousCodexAccountUsageIfNeeded(
+                self.refreshCodexAccountForMonitoring(account),
                 previous: self.codexAccountUsageSnapshots[account.id])
             refreshed[account.id] = entry
             self.codexAccountUsageSnapshots = refreshed

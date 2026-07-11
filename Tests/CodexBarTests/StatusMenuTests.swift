@@ -901,7 +901,7 @@ extension StatusMenuTests {
     }
 
     @Test
-    func `hides credits section while preserving codex cost menu card section`() throws {
+    func `hides credits section while preserving codex cost menu card section`() {
         self.disableMenuCardsForTesting()
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false

@@ -33,7 +33,8 @@ struct CodexBarWidgetProviderTests {
             dailyUsage: [])
         let snapshot = WidgetSnapshot(entries: [alpha, beta], enabledProviders: [.codex], generatedAt: now)
 
-        #expect(WidgetEntrySelection.entry(in: snapshot, provider: .codex, accountID: nil)?.accountID == "alpha@example.com")
+        #expect(WidgetEntrySelection.entry(in: snapshot, provider: .codex, accountID: nil)?
+            .accountID == "alpha@example.com")
     }
 
     @Test

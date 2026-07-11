@@ -821,7 +821,7 @@ extension StatusItemController {
     }
 
     private func codexAccountMenuDisplay(for _: UsageProvider) -> CodexAccountMenuDisplay? {
-        return nil
+        nil
     }
 
     private func menuNeedsRefresh(_ menu: NSMenu) -> Bool {

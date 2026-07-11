@@ -216,8 +216,8 @@ struct WidgetUsageRow: Identifiable, Equatable {
     }
 }
 
-private extension WidgetSnapshot.ProviderEntry {
-    func resetDetail(for rowID: String) -> String? {
+extension WidgetSnapshot.ProviderEntry {
+    fileprivate func resetDetail(for rowID: String) -> String? {
         switch rowID.lowercased() {
         case "session", "primary", "5h":
             self.primary?.widgetResetDetail
@@ -231,8 +231,8 @@ private extension WidgetSnapshot.ProviderEntry {
     }
 }
 
-private extension RateWindow {
-    var widgetResetDetail: String? {
+extension RateWindow {
+    fileprivate var widgetResetDetail: String? {
         UsageFormatter.resetLine(for: self, style: .countdown)
     }
 }
