@@ -12,14 +12,13 @@ struct CodexBarUsageWidgetView: View {
             provider: self.entry.provider,
             accountID: self.entry.accountID)
         ZStack {
-            Color.black.opacity(0.02)
             if let providerEntry {
                 self.content(providerEntry: providerEntry)
             } else {
                 self.emptyState
             }
         }
-        .containerBackground(.fill.tertiary, for: .widget)
+        .containerBackground(.regularMaterial, for: .widget)
     }
 
     @ViewBuilder
@@ -57,14 +56,13 @@ struct CodexBarHistoryWidgetView: View {
             provider: self.entry.provider,
             accountID: self.entry.accountID)
         ZStack {
-            Color.black.opacity(0.02)
             if let providerEntry {
                 HistoryView(entry: providerEntry, isLarge: self.family == .systemLarge)
             } else {
                 self.emptyState
             }
         }
-        .containerBackground(.fill.tertiary, for: .widget)
+        .containerBackground(.regularMaterial, for: .widget)
     }
 
     private var emptyState: some View {

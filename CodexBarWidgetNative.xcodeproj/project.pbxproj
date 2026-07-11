@@ -7,80 +7,80 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		9AF5820BFEE3844D381D1809 /* CodexBarWidgetNative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61D86A3120922120F4CBFC89 /* CodexBarWidgetNative.swift */; };
-		B9334788A062A7325D8CC20B /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 78F9A7B8EADF009CDF09C7E4 /* Cocoa.framework */; };
+		2809C1AF6C04228D7D9F9696 /* CodexBarWidgetNative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F57B38EE40E0ECD35F71B21 /* CodexBarWidgetNative.swift */; };
+		3FA494704EED1970414F1052 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E6E1D88927FFDE6E52D11265 /* Cocoa.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		61D86A3120922120F4CBFC89 /* CodexBarWidgetNative.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CodexBarWidgetNative.swift; sourceTree = "<group>"; };
-		78F9A7B8EADF009CDF09C7E4 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
-		DE37833F4EC6FC305087E9B6 /* CodexBarWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CodexBarWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		2F57B38EE40E0ECD35F71B21 /* CodexBarWidgetNative.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CodexBarWidgetNative.swift; sourceTree = "<group>"; };
+		AFCAA7E1B85DE194A6401834 /* CodexBarWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CodexBarWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		E6E1D88927FFDE6E52D11265 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		86537BA855C504C8F4E8DF51 /* Frameworks */ = {
+		DD36E3B24186656FCA2B8A00 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B9334788A062A7325D8CC20B /* Cocoa.framework in Frameworks */,
+				3FA494704EED1970414F1052 /* Cocoa.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		7C124877409663AF851A1596 /* CodexBarWidgetNative */ = {
+		019AD91154A37AD241424F0B /* OS X */ = {
 			isa = PBXGroup;
 			children = (
-				61D86A3120922120F4CBFC89 /* CodexBarWidgetNative.swift */,
+				E6E1D88927FFDE6E52D11265 /* Cocoa.framework */,
+			);
+			name = "OS X";
+			sourceTree = "<group>";
+		};
+		7F24E7EF2C1B4C645148D1CC /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AFCAA7E1B85DE194A6401834 /* CodexBarWidget.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		88AFB77D57BF3DD61D222CDA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				019AD91154A37AD241424F0B /* OS X */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A91E57E06F753E770281EEC0 = {
+			isa = PBXGroup;
+			children = (
+				7F24E7EF2C1B4C645148D1CC /* Products */,
+				88AFB77D57BF3DD61D222CDA /* Frameworks */,
+				B00C3852D3C674AEF2E6276F /* CodexBarWidgetNative */,
+			);
+			sourceTree = "<group>";
+		};
+		B00C3852D3C674AEF2E6276F /* CodexBarWidgetNative */ = {
+			isa = PBXGroup;
+			children = (
+				2F57B38EE40E0ECD35F71B21 /* CodexBarWidgetNative.swift */,
 			);
 			name = CodexBarWidgetNative;
 			path = Sources/CodexBarWidgetNative;
 			sourceTree = "<group>";
 		};
-		8B4B52C44E205AA292281407 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				CA129C87683457023EE88A99 /* OS X */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		8BAF43827BC9147D78EEC7DC /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				DE37833F4EC6FC305087E9B6 /* CodexBarWidget.appex */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
-		CA129C87683457023EE88A99 /* OS X */ = {
-			isa = PBXGroup;
-			children = (
-				78F9A7B8EADF009CDF09C7E4 /* Cocoa.framework */,
-			);
-			name = "OS X";
-			sourceTree = "<group>";
-		};
-		EDE51614923C426E320A6061 = {
-			isa = PBXGroup;
-			children = (
-				8BAF43827BC9147D78EEC7DC /* Products */,
-				8B4B52C44E205AA292281407 /* Frameworks */,
-				7C124877409663AF851A1596 /* CodexBarWidgetNative */,
-			);
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		1226ECB880229D6AE66EA07E /* CodexBarWidget */ = {
+		81337A6BA5AA72AECDF36DDE /* CodexBarWidget */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5900AA9AC5E116E1303E7BD2 /* Build configuration list for PBXNativeTarget "CodexBarWidget" */;
+			buildConfigurationList = 10F86BF4D7B4CA1324D485C0 /* Build configuration list for PBXNativeTarget "CodexBarWidget" */;
 			buildPhases = (
-				24631A29DC6A52616584086C /* Sources */,
-				86537BA855C504C8F4E8DF51 /* Frameworks */,
-				2A0436B6274A5E88045A43EB /* Resources */,
+				82A946ADBAA83A0E4B2E343F /* Sources */,
+				DD36E3B24186656FCA2B8A00 /* Frameworks */,
+				980B2349BDBB0EA87C8AA545 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -88,19 +88,19 @@
 			);
 			name = CodexBarWidget;
 			productName = CodexBarWidget;
-			productReference = DE37833F4EC6FC305087E9B6 /* CodexBarWidget.appex */;
+			productReference = AFCAA7E1B85DE194A6401834 /* CodexBarWidget.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		2D8F4DE15EC0859C6379D819 /* Project object */ = {
+		07572B7571799E42DDBF122F /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				LastSwiftUpdateCheck = 1600;
 				LastUpgradeCheck = 1600;
 			};
-			buildConfigurationList = 20BAB19A2BA57B18B8DDEB99 /* Build configuration list for PBXProject "CodexBarWidgetNative" */;
+			buildConfigurationList = 867216839860C0F6D70CF347 /* Build configuration list for PBXProject "CodexBarWidgetNative" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -108,20 +108,20 @@
 				en,
 				Base,
 			);
-			mainGroup = EDE51614923C426E320A6061;
+			mainGroup = A91E57E06F753E770281EEC0;
 			minimizedProjectReferenceProxies = 0;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 8BAF43827BC9147D78EEC7DC /* Products */;
+			productRefGroup = 7F24E7EF2C1B4C645148D1CC /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				1226ECB880229D6AE66EA07E /* CodexBarWidget */,
+				81337A6BA5AA72AECDF36DDE /* CodexBarWidget */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		2A0436B6274A5E88045A43EB /* Resources */ = {
+		980B2349BDBB0EA87C8AA545 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -131,18 +131,110 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		24631A29DC6A52616584086C /* Sources */ = {
+		82A946ADBAA83A0E4B2E343F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9AF5820BFEE3844D381D1809 /* CodexBarWidgetNative.swift in Sources */,
+				2809C1AF6C04228D7D9F9696 /* CodexBarWidgetNative.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		8D8AA0336EA5E2A33F3DF75B /* Debug */ = {
+		1C425A7E634CD66CA19CD9F8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGN_STYLE = Manual;
+				ENABLE_APP_SANDBOX = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Sources/CodexBarWidgetNative/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.steipete.codexbar.widget;
+				PRODUCT_NAME = CodexBarWidget;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+				WK_APP_BUNDLE_IDENTIFIER = com.steipete.codexbar;
+			};
+			name = Release;
+		};
+		6C4C4E337642DEE72AB92BE3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGN_STYLE = Manual;
+				ENABLE_APP_SANDBOX = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Sources/CodexBarWidgetNative/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.steipete.codexbar.widget;
+				PRODUCT_NAME = CodexBarWidget;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+				WK_APP_BUNDLE_IDENTIFIER = com.steipete.codexbar;
+			};
+			name = Debug;
+		};
+		9B3D396487CA9530A272FD1B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		B466E04F365C95858D5061AA /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -203,120 +295,28 @@
 			};
 			name = Debug;
 		};
-		CBD61795AA1772B687E16576 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGN_STYLE = Manual;
-				ENABLE_APP_SANDBOX = YES;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Sources/CodexBarWidgetNative/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.steipete.codexbar.widget;
-				PRODUCT_NAME = CodexBarWidget;
-				SDKROOT = macosx;
-				SWIFT_VERSION = 6.0;
-				WK_APP_BUNDLE_IDENTIFIER = com.steipete.codexbar;
-			};
-			name = Debug;
-		};
-		CC819A737C62E3B78DFDC872 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
-				CLANG_CXX_LIBRARY = "libc++";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				ENABLE_NS_ASSERTIONS = NO;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				MTL_ENABLE_DEBUG_INFO = NO;
-				MTL_FAST_MATH = YES;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				SWIFT_VERSION = 5.0;
-			};
-			name = Release;
-		};
-		F7A96CE62E0344D066E382B4 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGNING_ALLOWED = NO;
-				CODE_SIGN_STYLE = Manual;
-				ENABLE_APP_SANDBOX = YES;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Sources/CodexBarWidgetNative/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.steipete.codexbar.widget;
-				PRODUCT_NAME = CodexBarWidget;
-				SDKROOT = macosx;
-				SWIFT_VERSION = 6.0;
-				WK_APP_BUNDLE_IDENTIFIER = com.steipete.codexbar;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		20BAB19A2BA57B18B8DDEB99 /* Build configuration list for PBXProject "CodexBarWidgetNative" */ = {
+		10F86BF4D7B4CA1324D485C0 /* Build configuration list for PBXNativeTarget "CodexBarWidget" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				8D8AA0336EA5E2A33F3DF75B /* Debug */,
-				CC819A737C62E3B78DFDC872 /* Release */,
+				1C425A7E634CD66CA19CD9F8 /* Release */,
+				6C4C4E337642DEE72AB92BE3 /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		5900AA9AC5E116E1303E7BD2 /* Build configuration list for PBXNativeTarget "CodexBarWidget" */ = {
+		867216839860C0F6D70CF347 /* Build configuration list for PBXProject "CodexBarWidgetNative" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				F7A96CE62E0344D066E382B4 /* Release */,
-				CBD61795AA1772B687E16576 /* Debug */,
+				B466E04F365C95858D5061AA /* Debug */,
+				9B3D396487CA9530A272FD1B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 2D8F4DE15EC0859C6379D819 /* Project object */;
+	rootObject = 07572B7571799E42DDBF122F /* Project object */;
 }
