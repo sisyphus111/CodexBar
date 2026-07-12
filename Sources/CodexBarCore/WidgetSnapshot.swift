@@ -167,10 +167,6 @@ public enum WidgetSnapshotStore {
         return [primaryURL, fallbackURL].filter { seen.insert($0.path).inserted }
     }
 
-    public static func appGroupID(for bundleID: String?) -> String? {
-        AppGroupSupport.currentGroupID(for: bundleID)
-    }
-
     private static var encoder: JSONEncoder {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601

@@ -116,11 +116,19 @@ public enum AppGroupSupport {
         homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser)
         -> URL
     {
-        let directory = homeDirectory
+        let widgetBundleID = self.fallbackWidgetBundleID(bundleID: bundleID)
+        let sandboxContainerSuffix = ["Library", "Containers", widgetBundleID, "Data"]
+        let homeComponents = homeDirectory.standardizedFileURL.pathComponents
+        let isWidgetSandboxHome = Array(homeComponents.suffix(sandboxContainerSuffix.count))
+            == sandboxContainerSuffix
+        let containerDataDirectory = isWidgetSandboxHome
+            ? homeDirectory
+            : homeDirectory
             .appendingPathComponent("Library", isDirectory: true)
             .appendingPathComponent("Containers", isDirectory: true)
-            .appendingPathComponent(self.fallbackWidgetBundleID(bundleID: bundleID), isDirectory: true)
+            .appendingPathComponent(widgetBundleID, isDirectory: true)
             .appendingPathComponent("Data", isDirectory: true)
+        let directory = containerDataDirectory
             .appendingPathComponent("Library", isDirectory: true)
             .appendingPathComponent("Application Support", isDirectory: true)
             .appendingPathComponent("CodexBar", isDirectory: true)

@@ -4,6 +4,7 @@ import WidgetKit
 
 struct CodexBarUsageWidgetView: View {
     @Environment(\.widgetFamily) private var family
+    @Environment(\.widgetRenderingMode) private var renderingMode
     let entry: CodexBarWidgetEntry
 
     var body: some View {
@@ -18,7 +19,14 @@ struct CodexBarUsageWidgetView: View {
                 self.emptyState
             }
         }
-        .containerBackground(.regularMaterial, for: .widget)
+        .containerBackground(for: .widget) {
+            ContainerRelativeShape()
+                .fill(WidgetPalette.background(for: self.renderingMode))
+                .overlay {
+                    ContainerRelativeShape()
+                        .strokeBorder(WidgetPalette.border, lineWidth: 1)
+                }
+        }
     }
 
     @ViewBuilder
@@ -38,9 +46,10 @@ struct CodexBarUsageWidgetView: View {
             Text("Open CodexBar")
                 .font(.body)
                 .fontWeight(.semibold)
+                .foregroundStyle(WidgetPalette.text)
             Text("Usage data will appear once the app refreshes.")
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(WidgetPalette.secondaryText)
         }
         .padding(12)
     }
@@ -48,6 +57,7 @@ struct CodexBarUsageWidgetView: View {
 
 struct CodexBarHistoryWidgetView: View {
     @Environment(\.widgetFamily) private var family
+    @Environment(\.widgetRenderingMode) private var renderingMode
     let entry: CodexBarWidgetEntry
 
     var body: some View {
@@ -62,7 +72,14 @@ struct CodexBarHistoryWidgetView: View {
                 self.emptyState
             }
         }
-        .containerBackground(.regularMaterial, for: .widget)
+        .containerBackground(for: .widget) {
+            ContainerRelativeShape()
+                .fill(WidgetPalette.background(for: self.renderingMode))
+                .overlay {
+                    ContainerRelativeShape()
+                        .strokeBorder(WidgetPalette.border, lineWidth: 1)
+                }
+        }
     }
 
     private var emptyState: some View {
@@ -70,9 +87,10 @@ struct CodexBarHistoryWidgetView: View {
             Text("Open CodexBar")
                 .font(.body)
                 .fontWeight(.semibold)
+                .foregroundStyle(WidgetPalette.text)
             Text("Usage history will appear after a refresh.")
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(WidgetPalette.secondaryText)
         }
         .padding(12)
     }
@@ -96,27 +114,22 @@ private struct SmallUsageView: View {
     let entry: WidgetSnapshot.ProviderEntry
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 7) {
             HeaderView(
                 provider: self.entry.provider,
                 accountDisplayName: self.entry.accountDisplayName,
-                updatedAt: self.entry.updatedAt)
-            ForEach(WidgetUsageRow.rows(for: self.entry)) { row in
+                planDisplayName: self.entry.planDisplayName,
+                updatedAt: self.entry.updatedAt,
+                compact: true)
+            ForEach(WidgetUsageRow.rows(for: self.entry).prefix(2)) { row in
                 UsageBarRow(
                     title: row.title,
                     percentLeft: row.percentLeft,
                     resetDetail: row.resetDetail,
                     color: WidgetColors.color(for: self.entry.provider))
             }
-            if let codeReview = entry.codeReviewRemainingPercent {
-                UsageBarRow(
-                    title: "Code review",
-                    percentLeft: codeReview,
-                    resetDetail: nil,
-                    color: WidgetColors.color(for: self.entry.provider))
-            }
         }
-        .padding(12)
+        .padding(10)
     }
 }
 
@@ -124,27 +137,26 @@ private struct MediumUsageView: View {
     let entry: WidgetSnapshot.ProviderEntry
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             HeaderView(
                 provider: self.entry.provider,
                 accountDisplayName: self.entry.accountDisplayName,
+                planDisplayName: self.entry.planDisplayName,
                 updatedAt: self.entry.updatedAt)
-            ForEach(WidgetUsageRow.rows(for: self.entry)) { row in
-                UsageBarRow(
-                    title: row.title,
-                    percentLeft: row.percentLeft,
-                    resetDetail: row.resetDetail,
-                    color: WidgetColors.color(for: self.entry.provider))
-            }
-            if let codeReview = entry.codeReviewRemainingPercent {
-                UsageBarRow(
-                    title: "Code review",
-                    percentLeft: codeReview,
-                    resetDetail: nil,
-                    color: WidgetColors.color(for: self.entry.provider))
+            HStack(alignment: .center, spacing: 12) {
+                ForEach(Array(WidgetUsageRow.rows(for: self.entry).prefix(2).enumerated()), id: \.element.id) { item in
+                    let (index, row) = item
+                    if index > 0 {
+                        Rectangle()
+                            .fill(WidgetPalette.divider)
+                            .frame(width: 1)
+                    }
+                    QuotaPanel(row: row, color: WidgetColors.color(for: self.entry.provider))
+                        .frame(maxWidth: .infinity)
+                }
             }
         }
-        .padding(12)
+        .padding(14)
     }
 }
 
@@ -152,19 +164,27 @@ private struct LargeUsageView: View {
     let entry: WidgetSnapshot.ProviderEntry
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             HeaderView(
                 provider: self.entry.provider,
                 accountDisplayName: self.entry.accountDisplayName,
+                planDisplayName: self.entry.planDisplayName,
                 updatedAt: self.entry.updatedAt)
-            ForEach(WidgetUsageRow.rows(for: self.entry)) { row in
-                UsageBarRow(
-                    title: row.title,
-                    percentLeft: row.percentLeft,
-                    resetDetail: row.resetDetail,
-                    color: WidgetColors.color(for: self.entry.provider))
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(Array(WidgetUsageRow.rows(for: self.entry).prefix(2).enumerated()), id: \.element.id) { item in
+                    let (index, row) = item
+                    if index > 0 {
+                        Rectangle()
+                            .fill(WidgetPalette.divider)
+                            .frame(height: 1)
+                            .padding(.vertical, 10)
+                    }
+                    QuotaBand(row: row, color: WidgetColors.color(for: self.entry.provider))
+                        .frame(maxHeight: .infinity)
+                }
             }
-            if let codeReview = entry.codeReviewRemainingPercent {
+            .frame(maxHeight: .infinity)
+            if let codeReview = self.entry.codeReviewRemainingPercent {
                 UsageBarRow(
                     title: "Code review",
                     percentLeft: codeReview,
@@ -172,7 +192,7 @@ private struct LargeUsageView: View {
                     color: WidgetColors.color(for: self.entry.provider))
             }
         }
-        .padding(12)
+        .padding(14)
     }
 }
 
@@ -246,35 +266,72 @@ private struct HistoryView: View {
             HeaderView(
                 provider: self.entry.provider,
                 accountDisplayName: self.entry.accountDisplayName,
+                planDisplayName: self.entry.planDisplayName,
                 updatedAt: self.entry.updatedAt)
             UsageHistoryChart(points: self.entry.dailyUsage, color: WidgetColors.color(for: self.entry.provider))
                 .frame(height: self.isLarge ? 90 : 60)
         }
-        .padding(12)
+        .padding(14)
     }
 }
 
 private struct HeaderView: View {
     let provider: UsageProvider
     let accountDisplayName: String?
+    let planDisplayName: String?
     let updatedAt: Date
+    let compact: Bool
 
-    init(provider: UsageProvider, accountDisplayName: String? = nil, updatedAt: Date) {
+    init(
+        provider: UsageProvider,
+        accountDisplayName: String? = nil,
+        planDisplayName: String? = nil,
+        updatedAt: Date,
+        compact: Bool = false)
+    {
         self.provider = provider
         self.accountDisplayName = accountDisplayName
+        self.planDisplayName = planDisplayName
         self.updatedAt = updatedAt
+        self.compact = compact
     }
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(self.accountDisplayName ?? ProviderDefaults.metadata[self.provider]?.displayName ?? "Codex")
-                .font(.body)
-                .fontWeight(.semibold)
-            Spacer()
+        HStack(alignment: .top, spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(ProviderDefaults.metadata[self.provider]?.displayName ?? "Codex")
+                        .font(self.compact ? .headline.weight(.semibold) : .title2.weight(.semibold))
+                        .foregroundStyle(WidgetPalette.text)
+                    if let planDisplayName, !planDisplayName.isEmpty {
+                        Text(planDisplayName)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(WidgetPalette.green)
+                            .lineLimit(1)
+                    }
+                }
+                if let accountDisplayName, !accountDisplayName.isEmpty {
+                    Text(accountDisplayName)
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(WidgetPalette.secondaryText)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                }
+            }
+            Spacer(minLength: 6)
             Text(WidgetFormat.relativeDate(self.updatedAt))
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .fontWeight(.semibold)
+                .foregroundStyle(WidgetPalette.secondaryText)
+                .lineLimit(1)
         }
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(WidgetPalette.divider)
+                .frame(height: 1)
+                .offset(y: self.compact ? 6 : 7)
+        }
+        .padding(.bottom, self.compact ? 6 : 7)
     }
 }
 
@@ -286,30 +343,146 @@ private struct UsageBarRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack {
+            HStack(alignment: .firstTextBaseline) {
                 Text(self.title)
-                    .font(.caption)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(WidgetPalette.text)
                 Spacer()
                 Text(WidgetFormat.percent(self.percentLeft))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.caption.monospacedDigit().weight(.bold))
+                    .foregroundStyle(WidgetPalette.text)
             }
-            GeometryReader { proxy in
-                let width = max(0, min(1, (percentLeft ?? 0) / 100)) * proxy.size.width
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Color.primary.opacity(0.08))
-                    Capsule().fill(self.color).frame(width: width)
-                }
-            }
-            .frame(height: 6)
+            WidgetProgressBar(percentLeft: self.percentLeft, color: self.color)
+                .frame(height: 6)
             if let resetDetail {
                 Text(resetDetail)
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(WidgetPalette.secondaryText)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
         }
+    }
+}
+
+private struct QuotaPanel: View {
+    let row: WidgetUsageRow
+    let color: Color
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 10) {
+            RingProgressView(percentLeft: self.row.percentLeft, color: self.color, size: 40)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text(self.row.title)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(WidgetPalette.text)
+                        .lineLimit(1)
+                    Spacer(minLength: 0)
+                    Text(WidgetFormat.percent(self.row.percentLeft))
+                        .font(.title3.monospacedDigit().weight(.bold))
+                        .foregroundStyle(WidgetPalette.text)
+                }
+                WidgetProgressBar(percentLeft: self.row.percentLeft, color: self.color)
+                    .frame(height: 7)
+                QuotaDetailView(row: self.row, compact: true)
+            }
+            .layoutPriority(1)
+        }
+    }
+}
+
+private struct QuotaBand: View {
+    let row: WidgetUsageRow
+    let color: Color
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            RingProgressView(percentLeft: self.row.percentLeft, color: self.color, size: 52)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Text(self.row.title)
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(WidgetPalette.text)
+                    Spacer(minLength: 8)
+                    Text(WidgetFormat.percent(self.row.percentLeft))
+                        .font(.system(size: 38, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundStyle(WidgetPalette.text)
+                        .minimumScaleFactor(0.75)
+                }
+                WidgetProgressBar(percentLeft: self.row.percentLeft, color: self.color)
+                    .frame(height: 8)
+                QuotaDetailView(row: self.row, compact: false)
+            }
+            .layoutPriority(1)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+    }
+}
+
+private struct QuotaDetailView: View {
+    let row: WidgetUsageRow
+    let compact: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: self.compact ? 2 : 5) {
+            if let percentLeft = self.row.percentLeft {
+                Text("Used \(Int(max(0, min(100, 100 - percentLeft)).rounded()))%")
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(WidgetPalette.secondaryText)
+            }
+            if let resetDetail = self.row.resetDetail {
+                Text(resetDetail)
+                    .font(.caption2.weight(self.compact ? .regular : .semibold))
+                    .foregroundStyle(WidgetPalette.secondaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
+        }
+    }
+}
+
+private struct WidgetProgressBar: View {
+    let percentLeft: Double?
+    let color: Color
+
+    var body: some View {
+        GeometryReader { proxy in
+            let fraction = max(0, min(1, (self.percentLeft ?? 0) / 100))
+            ZStack(alignment: .leading) {
+                Capsule().fill(WidgetPalette.track)
+                Capsule()
+                    .fill(self.color)
+                    .frame(width: proxy.size.width * fraction)
+                    .widgetAccentable()
+            }
+        }
+    }
+}
+
+private struct RingProgressView: View {
+    let percentLeft: Double?
+    let color: Color
+    let size: CGFloat
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(WidgetPalette.track, lineWidth: self.lineWidth)
+            Circle()
+                .trim(from: 0, to: max(0, min(1, (self.percentLeft ?? 0) / 100)))
+                .stroke(
+                    self.color,
+                    style: StrokeStyle(lineWidth: self.lineWidth, lineCap: .round, lineJoin: .round))
+                .rotationEffect(.degrees(-90))
+                .widgetAccentable()
+        }
+        .frame(width: self.size, height: self.size)
+    }
+
+    private var lineWidth: CGFloat {
+        self.size <= 44 ? 5 : 6
     }
 }
 
@@ -332,8 +505,23 @@ private struct UsageHistoryChart: View {
                     .frame(maxWidth: .infinity)
                     .scaleEffect(x: 1, y: height, anchor: .bottom)
                     .animation(.easeOut(duration: 0.2), value: height)
+                    .widgetAccentable()
             }
         }
+    }
+}
+
+private enum WidgetPalette {
+    static let border = Color.white.opacity(0.28)
+    static let text = Color.white.opacity(0.94)
+    static let secondaryText = Color.white.opacity(0.62)
+    static let track = Color(red: 106 / 255, green: 123 / 255, blue: 139 / 255).opacity(0.40)
+    static let divider = Color.white.opacity(0.12)
+    static let green = Color(red: 45 / 255, green: 215 / 255, blue: 96 / 255)
+
+    static func background(for renderingMode: WidgetRenderingMode) -> Color {
+        let opacity = renderingMode == .fullColor ? 0.82 : 0.74
+        return Color(red: 38 / 255, green: 56 / 255, blue: 74 / 255).opacity(opacity)
     }
 }
 
@@ -342,7 +530,7 @@ enum WidgetColors {
     static func color(for provider: UsageProvider) -> Color {
         switch provider {
         case .codex:
-            Color(red: 73 / 255, green: 163 / 255, blue: 176 / 255)
+            WidgetPalette.green
         case .claude:
             Color(red: 204 / 255, green: 124 / 255, blue: 94 / 255)
         case .gemini:

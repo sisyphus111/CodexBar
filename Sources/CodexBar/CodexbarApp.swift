@@ -94,12 +94,6 @@ struct CodexBarApp: App {
         .defaultSize(width: PreferencesTab.general.preferredWidth, height: PreferencesTab.general.preferredHeight)
         .windowResizability(.contentSize)
     }
-
-    private func openSettings(tab: PreferencesTab) {
-        self.preferencesSelection.tab = tab
-        NSApp.activate(ignoringOtherApps: true)
-        _ = NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
-    }
 }
 
 // MARK: - Updater abstraction
@@ -132,7 +126,6 @@ final class DisabledUpdaterController: UpdaterProviding {
 @MainActor
 @Observable
 final class UpdateStatus {
-    static let disabled = UpdateStatus()
     var isUpdateReady: Bool
 
     init(isUpdateReady: Bool = false) {

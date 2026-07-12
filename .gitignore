@@ -9,6 +9,7 @@ xcuserdata/
 .build/
 build/
 DerivedData
+CodexBarWidget.xcodeproj/
 # Bundles / artifacts
 # Main app bundle (any variation)
 CodexBar.app/

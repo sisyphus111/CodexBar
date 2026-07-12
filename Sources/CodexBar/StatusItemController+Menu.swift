@@ -923,14 +923,6 @@ extension StatusItemController {
         }
     }
 
-    private func menuNeedsDelayedRefreshRetry(for menu: NSMenu) -> Bool {
-        let providersToCheck = self.delayedRefreshRetryProviders(for: menu)
-        guard !providersToCheck.isEmpty else { return false }
-        return providersToCheck.contains { provider in
-            self.store.isStale(provider: provider) || self.store.snapshot(for: provider) == nil
-        }
-    }
-
     private func delayedRefreshRetryProviders(for menu: NSMenu) -> [UsageProvider] {
         let enabledProviders = self.store.enabledProvidersForDisplay()
         guard !enabledProviders.isEmpty else { return [] }
@@ -953,22 +945,6 @@ extension StatusItemController {
             return [provider]
         }
         return enabledProviders
-    }
-
-    private func refreshMenuCardHeights(in menu: NSMenu) {
-        // Re-measure the menu card height right before display to avoid stale/incorrect sizing when content
-        // changes (e.g. dashboard error lines causing wrapping).
-        let cardItems = menu.items.filter { item in
-            (item.representedObject as? String)?.hasPrefix("menuCard") == true
-        }
-        for item in cardItems {
-            guard let view = item.view else { continue }
-            let width = self.renderedMenuWidth(for: menu)
-            let height = self.menuCardHeight(for: view, width: width)
-            view.frame = NSRect(
-                origin: .zero,
-                size: NSSize(width: width, height: height))
-        }
     }
 
     func makeMenuCardItem(

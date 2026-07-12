@@ -58,6 +58,22 @@ struct AppGroupSupportTests {
     }
 
     @Test
+    func `local fallback does not nest an existing widget sandbox home`() {
+        let sandboxHome = URL(
+            fileURLWithPath: "/tmp/CodexBarHome/Library/Containers/com.steipete.codexbar.widget/Data",
+            isDirectory: true)
+        let snapshotURL = AppGroupSupport.localFallbackDirectory(
+            bundleID: "com.steipete.codexbar.widget",
+            homeDirectory: sandboxHome)
+            .appendingPathComponent(AppGroupSupport.widgetSnapshotFilename, isDirectory: false)
+
+        #expect(
+            snapshotURL.path
+                == "/tmp/CodexBarHome/Library/Containers/com.steipete.codexbar.widget/Data/Library/"
+                + "Application Support/CodexBar/widget-snapshot.json")
+    }
+
+    @Test
     func `legacy migration copies snapshot once`() throws {
         let fileManager = FileManager.default
         let root = fileManager.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)

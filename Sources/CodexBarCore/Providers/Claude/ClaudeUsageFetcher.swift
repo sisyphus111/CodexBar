@@ -1082,66 +1082,6 @@ extension ClaudeUsageFetcher {
         }
         return snapshot
     }
-
-    // MARK: - Process helpers
-
-    private static func which(_ tool: String) -> String? {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/which")
-        process.arguments = [tool]
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        try? process.run()
-        process.waitUntilExit()
-        guard process.terminationStatus == 0 else { return nil }
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        guard
-            let path = String(data: data, encoding: .utf8)?
-                .trimmingCharacters(in: .whitespacesAndNewlines),
-                !path.isEmpty
-        else { return nil }
-        return path
-    }
-
-    private static func readString(cmd: String, args: [String]) -> String? {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: cmd)
-        task.arguments = args
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        try? task.run()
-        task.waitUntilExit()
-        guard task.terminationStatus == 0 else { return nil }
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        return String(data: data, encoding: .utf8)
-    }
-
-    private static func oauthCredentialProbeErrorLabel(_ error: Error) -> String {
-        guard let oauthError = error as? ClaudeOAuthCredentialsError else {
-            return String(describing: type(of: error))
-        }
-
-        return switch oauthError {
-        case .decodeFailed:
-            "decodeFailed"
-        case .missingOAuth:
-            "missingOAuth"
-        case .missingAccessToken:
-            "missingAccessToken"
-        case .notFound:
-            "notFound"
-        case let .keychainError(status):
-            "keychainError:\(status)"
-        case .readFailed:
-            "readFailed"
-        case .refreshFailed:
-            "refreshFailed"
-        case .noRefreshToken:
-            "noRefreshToken"
-        case .refreshDelegatedToClaudeCLI:
-            "refreshDelegatedToClaudeCLI"
-        }
-    }
 }
 
 #if DEBUG

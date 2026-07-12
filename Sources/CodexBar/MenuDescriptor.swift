@@ -481,10 +481,6 @@ private enum AccountFormatter {
         let cleaned = CodexPlanFormatting.displayName(text) ?? UsageFormatter.cleanPlanName(text)
         return cleaned.isEmpty ? text : cleaned
     }
-
-    static func email(_ text: String) -> String {
-        text
-    }
 }
 
 extension MenuDescriptor.MenuAction {

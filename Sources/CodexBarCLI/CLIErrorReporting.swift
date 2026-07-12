@@ -103,23 +103,4 @@ extension CodexBarCLI {
         }
         platformExit(code.rawValue)
     }
-
-    static func printError(_ error: Error, output: CLIOutputPreferences, kind: CLIErrorKind = .runtime) {
-        if output.usesJSONOutput {
-            let payload = ProviderPayload(
-                providerID: "cli",
-                account: nil,
-                version: nil,
-                source: "cli",
-                status: nil,
-                usage: nil,
-                credits: nil,
-                antigravityPlanInfo: nil,
-                openaiDashboard: nil,
-                error: self.makeErrorPayload(error, kind: kind))
-            self.printJSON([payload], pretty: output.pretty)
-        } else {
-            self.writeStderr("Error: \(error.localizedDescription)\n")
-        }
-    }
 }

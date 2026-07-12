@@ -72,10 +72,6 @@ struct PlanUtilizationHistoryBuckets: Equatable {
         }
     }
 
-    var isEmpty: Bool {
-        self.unscoped.isEmpty && self.accounts.values.allSatisfy(\.isEmpty)
-    }
-
     private static func sortedHistories(_ histories: [PlanUtilizationSeriesHistory]) -> [PlanUtilizationSeriesHistory] {
         histories.sorted { lhs, rhs in
             if lhs.windowMinutes != rhs.windowMinutes {
@@ -173,17 +169,6 @@ struct PlanUtilizationHistoryStore {
             output[provider] = Self.decodeProvider(history)
         }
 
-        return output
-    }
-
-    private static func decodeProviders(
-        _ providers: [String: ProviderHistoryFile]) -> [UsageProvider: PlanUtilizationHistoryBuckets]
-    {
-        var output: [UsageProvider: PlanUtilizationHistoryBuckets] = [:]
-        for (rawProvider, providerHistory) in providers {
-            guard let provider = UsageProvider(rawValue: rawProvider) else { continue }
-            output[provider] = Self.decodeProvider(providerHistory)
-        }
         return output
     }
 

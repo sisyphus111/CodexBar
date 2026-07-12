@@ -131,6 +131,7 @@ extension UsageStore {
             error: self.errors[provider])
     }
 
+    // swiftlint:disable:next function_parameter_count
     private func makeWidgetEntryOrPlaceholder(
         for provider: UsageProvider,
         snapshot: UsageSnapshot?,

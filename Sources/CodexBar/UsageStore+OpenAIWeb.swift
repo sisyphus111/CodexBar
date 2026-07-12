@@ -711,12 +711,6 @@ extension UsageStore {
         return "\(source)|\(identityKey)|\(accountKey)"
     }
 
-    private func actionableOpenAIDashboardImportFailure(targetEmail: String?) -> String? {
-        self.actionableOpenAIDashboardImportFailure(
-            targetEmail: targetEmail,
-            cookieImportStatus: self.openAIDashboardCookieImportStatus)
-    }
-
     private func actionableOpenAIDashboardImportFailure(
         targetEmail: String?,
         cookieImportStatus: String?) -> String?

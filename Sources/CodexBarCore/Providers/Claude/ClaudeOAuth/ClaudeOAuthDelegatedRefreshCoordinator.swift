@@ -327,12 +327,6 @@ public enum ClaudeOAuthDelegatedRefreshCoordinator {
         return ClaudeOAuthCredentialsStore.currentClaudeKeychainFingerprintWithoutPromptForAuthGate()
     }
 
-    private static func currentClaudeKeychainFingerprintForObservation() -> ClaudeOAuthCredentialsStore
-        .ClaudeKeychainFingerprint?
-    {
-        self.currentClaudeKeychainFingerprintForObservation(configuration: nil)
-    }
-
     private static func currentClaudeKeychainFingerprintForObservation(
         configuration: AttemptConfiguration?) -> ClaudeOAuthCredentialsStore.ClaudeKeychainFingerprint?
     {

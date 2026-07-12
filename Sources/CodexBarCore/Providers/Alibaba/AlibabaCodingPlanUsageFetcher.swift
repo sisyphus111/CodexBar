@@ -835,30 +835,6 @@ public struct AlibabaCodingPlanUsageFetcher: Sendable {
         return nil
     }
 
-    private static func findFirstDate(forKeys keys: [String], in value: Any) -> Date? {
-        if let dict = value as? [String: Any] {
-            for key in keys {
-                if let parsed = self.parseDate(dict[key]) {
-                    return parsed
-                }
-            }
-            for nested in dict.values {
-                if let parsed = self.findFirstDate(forKeys: keys, in: nested) {
-                    return parsed
-                }
-            }
-            return nil
-        }
-        if let array = value as? [Any] {
-            for item in array {
-                if let parsed = self.findFirstDate(forKeys: keys, in: item) {
-                    return parsed
-                }
-            }
-        }
-        return nil
-    }
-
     private static func expandedJSON(_ value: Any) -> Any {
         if let dict = value as? [String: Any] {
             var expanded: [String: Any] = [:]
@@ -908,43 +884,10 @@ public struct AlibabaCodingPlanUsageFetcher: Sendable {
         return nil
     }
 
-    private static func anyPercent(for keys: [String], in dict: [String: Any]) -> Double? {
-        for key in keys {
-            if let value = self.parsePercent(dict[key]) {
-                return value
-            }
-        }
-        return nil
-    }
-
     private static func anyBool(for keys: [String], in dict: [String: Any]) -> Bool? {
         for key in keys {
             if let value = self.parseBool(dict[key]) {
                 return value
-            }
-        }
-        return nil
-    }
-
-    private static func findFirstPercent(forKeys keys: [String], in value: Any) -> Double? {
-        if let dict = value as? [String: Any] {
-            for key in keys {
-                if let parsed = self.parsePercent(dict[key]) {
-                    return parsed
-                }
-            }
-            for nested in dict.values {
-                if let parsed = self.findFirstPercent(forKeys: keys, in: nested) {
-                    return parsed
-                }
-            }
-            return nil
-        }
-        if let array = value as? [Any] {
-            for item in array {
-                if let parsed = self.findFirstPercent(forKeys: keys, in: item) {
-                    return parsed
-                }
             }
         }
         return nil
@@ -992,18 +935,6 @@ public struct AlibabaCodingPlanUsageFetcher: Sendable {
         guard let value = raw as? String else { return nil }
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed
-    }
-
-    private static func parsePercent(_ raw: Any?) -> Double? {
-        if let intValue = self.parseInt(raw) {
-            return max(0, min(Double(intValue), 100))
-        }
-        guard let rawString = self.parseString(raw) else { return nil }
-        let cleaned = rawString
-            .replacingOccurrences(of: "%", with: "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let parsed = Double(cleaned) else { return nil }
-        return max(0, min(parsed, 100))
     }
 
     private static func parseBool(_ raw: Any?) -> Bool? {

@@ -139,11 +139,6 @@ enum KeychainMigration {
         self.log.info("Migrated \(item.label) to new accessibility level")
         return true
     }
-
-    /// Reset migration flag (for testing)
-    static func resetMigrationFlag() {
-        UserDefaults.standard.removeObject(forKey: self.migrationKey)
-    }
 }
 
 enum KeychainMigrationError: Error {

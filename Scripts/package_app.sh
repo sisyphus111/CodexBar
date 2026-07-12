@@ -103,91 +103,6 @@ path.write_text(text)
 PY
 }
 
-generate_widget_appintents_metadata() {
-  local widget_resources_dir="$1"
-  local xcode_conf
-  local host_arch
-  local derived_dir
-  local build_dir
-  local object_dir
-  local source_file_list
-  local const_values_list
-  local dependency_metadata
-  local static_dependency_metadata
-  local appintents_tool
-  local sdk_root
-  local swiftc_path
-  local toolchain_dir
-  local xcode_version
-
-  xcode_conf="Release"
-  if [[ "$LOWER_CONF" == "debug" ]]; then
-    xcode_conf="Debug"
-  fi
-
-  host_arch=$(uname -m)
-  derived_dir="$ROOT/.build/xcode-widget-metadata-${LOWER_CONF}"
-  build_dir="$derived_dir/Build/Intermediates.noindex/CodexBar.build/${xcode_conf}/${WIDGET_PRODUCT}.build"
-  object_dir="$build_dir/Objects-normal/${host_arch}"
-  source_file_list="$object_dir/${WIDGET_PRODUCT}.SwiftFileList"
-  const_values_list="$object_dir/${WIDGET_PRODUCT}.SwiftConstValuesFileList"
-  dependency_metadata="$build_dir/${WIDGET_PRODUCT}.DependencyMetadataFileList"
-  static_dependency_metadata="$build_dir/${WIDGET_PRODUCT}.DependencyStaticMetadataFileList"
-
-  appintents_tool=$(xcrun --find appintentsmetadataprocessor)
-  sdk_root=$(xcrun --sdk macosx --show-sdk-path)
-  swiftc_path=$(xcrun --find swiftc)
-  toolchain_dir=$(dirname "$(dirname "$(dirname "$swiftc_path")")")
-  xcode_version=$(xcodebuild -version | awk '/Build version/ { print $3 }')
-
-  if [[ "${CODEXBAR_FORCE_WIDGET_METADATA_CLEAN:-0}" == "1" ]]; then
-    rm -rf "$derived_dir"
-  fi
-  xcodebuild \
-    -workspace "$ROOT/.swiftpm/xcode/package.xcworkspace" \
-    -scheme "$WIDGET_PRODUCT" \
-    -configuration "$xcode_conf" \
-    -destination "platform=macOS,arch=${host_arch}" \
-    -derivedDataPath "$derived_dir" \
-    build >/dev/null
-
-  if [[ ! -f "$source_file_list" ]]; then
-    echo "ERROR: Missing App Intents metadata inputs for ${WIDGET_PRODUCT}." >&2
-    exit 1
-  fi
-
-  find "$object_dir" -name '*.swiftconstvalues' | sort > "$const_values_list"
-  if [[ ! -s "$const_values_list" ]]; then
-    echo "ERROR: Missing App Intents const-values outputs for ${WIDGET_PRODUCT}." >&2
-    exit 1
-  fi
-  rm -rf "$widget_resources_dir/Metadata.appintents"
-  mkdir -p "$widget_resources_dir"
-
-  "$appintents_tool" \
-    --output "$widget_resources_dir" \
-    --toolchain-dir "$toolchain_dir" \
-    --module-name "$WIDGET_PRODUCT" \
-    --sdk-root "$sdk_root" \
-    --xcode-version "$xcode_version" \
-    --platform-family macOS \
-    --deployment-target 14.0 \
-    --target-triple "${host_arch}-apple-macos14.0" \
-    --source-file-list "$source_file_list" \
-    --swift-const-vals-list "$const_values_list" \
-    --metadata-file-list "$dependency_metadata" \
-    --static-metadata-file-list "$static_dependency_metadata" \
-    --force >/dev/null
-
-  if [[ ! -f "$widget_resources_dir/Metadata.appintents/extract.actionsdata" ]]; then
-    if [[ "${CODEXBAR_ALLOW_EMPTY_WIDGET_METADATA:-0}" == "1" ]]; then
-      return 0
-    fi
-    echo "ERROR: Failed to generate App Intents metadata for ${WIDGET_PRODUCT}." >&2
-    exit 1
-  fi
-}
-
 KEYBOARD_SHORTCUTS_UTIL="$ROOT/.build/checkouts/KeyboardShortcuts/Sources/KeyboardShortcuts/Utilities.swift"
 if [[ ! -f "$KEYBOARD_SHORTCUTS_UTIL" ]]; then
   swift build -c "$CONF" --arch "${ARCH_LIST[0]}"
@@ -404,42 +319,33 @@ fi
 if [[ -n "$(resolve_binary_path "CodexBarClaudeWatchdog" "${ARCH_LIST[0]}")" ]]; then
   install_binary "CodexBarClaudeWatchdog" "$APP/Contents/Helpers/CodexBarClaudeWatchdog"
 fi
-if [[ -n "$(resolve_binary_path "$WIDGET_PRODUCT" "${ARCH_LIST[0]}")" ]]; then
-  WIDGET_APP="$APP/Contents/PlugIns/CodexBarWidget.appex"
-  mkdir -p "$WIDGET_APP/Contents/MacOS" "$WIDGET_APP/Contents/Resources"
-  cat > "$WIDGET_APP/Contents/Info.plist" <<PLIST
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleName</key><string>${WIDGET_PRODUCT}</string>
-    <key>CFBundleDisplayName</key><string>CodexBar</string>
-    <key>CFBundleIdentifier</key><string>${WIDGET_BUNDLE_ID}</string>
-    <key>CFBundleExecutable</key><string>${WIDGET_PRODUCT}</string>
-    <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
-    <key>CFBundlePackageType</key><string>XPC!</string>
-    <key>CFBundleShortVersionString</key><string>${MARKETING_VERSION}</string>
-    <key>CFBundleVersion</key><string>${EFFECTIVE_BUILD_NUMBER}</string>
-    <key>CFBundleSupportedPlatforms</key>
-    <array>
-        <string>MacOSX</string>
-    </array>
-    <key>LSMinimumSystemVersion</key><string>14.0</string>
-    <key>CodexBarTeamID</key><string>${APP_TEAM_ID}</string>
-    <key>NSExtension</key>
-    <dict>
-        <key>NSExtensionAttributes</key>
-        <dict>
-            <key>WKAppBundleIdentifier</key><string>${BUNDLE_ID}</string>
-        </dict>
-        <key>NSExtensionPointIdentifier</key><string>com.apple.widgetkit-extension</string>
-    </dict>
-</dict>
-</plist>
-PLIST
-  install_binary "$WIDGET_PRODUCT" "$WIDGET_APP/Contents/MacOS/$WIDGET_PRODUCT"
-  generate_widget_appintents_metadata "$WIDGET_APP/Contents/Resources"
+WIDGET_XCODE_CONFIGURATION="Release"
+if [[ "$LOWER_CONF" == "debug" ]]; then
+  WIDGET_XCODE_CONFIGURATION="Debug"
 fi
+WIDGET_DERIVED_DATA="$ROOT/.build/xcode-widget-${LOWER_CONF}"
+ruby "$ROOT/Scripts/generate_widget_xcodeproj.rb"
+xcodebuild \
+  -project "$ROOT/CodexBarWidget.xcodeproj" \
+  -scheme "$WIDGET_PRODUCT" \
+  -configuration "$WIDGET_XCODE_CONFIGURATION" \
+  -derivedDataPath "$WIDGET_DERIVED_DATA" \
+  ARCHS="${ARCH_LIST[*]}" \
+  ONLY_ACTIVE_ARCH=NO \
+  MARKETING_VERSION="$MARKETING_VERSION" \
+  CURRENT_PROJECT_VERSION="$EFFECTIVE_BUILD_NUMBER" \
+  PRODUCT_BUNDLE_IDENTIFIER="$WIDGET_BUNDLE_ID" \
+  WK_APP_BUNDLE_IDENTIFIER="$BUNDLE_ID" \
+  CODEXBAR_TEAM_ID="$APP_TEAM_ID" \
+  CODE_SIGNING_ALLOWED=NO \
+  build >/dev/null
+WIDGET_SOURCE_APP="$WIDGET_DERIVED_DATA/Build/Products/$WIDGET_XCODE_CONFIGURATION/CodexBarWidget.appex"
+if [[ ! -d "$WIDGET_SOURCE_APP" ]]; then
+  echo "ERROR: Xcode did not produce $WIDGET_SOURCE_APP" >&2
+  exit 1
+fi
+WIDGET_APP="$APP/Contents/PlugIns/CodexBarWidget.appex"
+ditto "$WIDGET_SOURCE_APP" "$WIDGET_APP"
 
 # Embed Sparkle.framework
 if [[ -d ".build/$CONF/Sparkle.framework" ]]; then

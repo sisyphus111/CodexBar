@@ -100,11 +100,6 @@ extension AlibabaCodingPlanUsageSnapshot {
         return Double(normalizedUsed) / Double(total) * 100
     }
 
-    private static func limitDescription(total: Int?, label: String) -> String? {
-        guard let total, total > 0 else { return nil }
-        return "\(total) requests / \(label)"
-    }
-
     private static func usageDetail(used: Int?, total: Int?) -> String? {
         guard let used, let total, total > 0 else { return nil }
         return "\(used) / \(total) used"
