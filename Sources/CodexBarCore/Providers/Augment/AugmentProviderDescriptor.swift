@@ -53,9 +53,9 @@ public enum AugmentProviderDescriptor {
                 iconStyle: .augment,
                 iconResourceName: "ProviderIcon-augment",
                 color: ProviderColor(red: 99 / 255, green: 102 / 255, blue: 241 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: false,
-                noDataMessage: { "Augment cost summary is not supported." }),
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: false,
+                noDataMessage: { "Augment token history is not supported." }),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .cli],
                 pipeline: ProviderFetchPipeline(resolveStrategies: { _ in

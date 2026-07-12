@@ -72,11 +72,9 @@ struct CodexConsumerProjectionCharacterizationTests {
         let fetcher = UsageFetcher()
         let store = self.makeCodexStore(settings: settings, dashboardAuthorized: true)
         store.credits = CreditsSnapshot(remaining: 42, events: [], updatedAt: Date())
-        store._setTokenSnapshotForTesting(CostUsageTokenSnapshot(
+        store._setTokenSnapshotForTesting(TokenUsageTokenSnapshot(
             sessionTokens: 123,
-            sessionCostUSD: 1.23,
             last30DaysTokens: 456,
-            last30DaysCostUSD: 4.56,
             daily: [],
             updatedAt: Date()), provider: .codex)
         store._setErrorForTesting("Live store error", provider: .codex)

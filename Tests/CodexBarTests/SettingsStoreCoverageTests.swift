@@ -154,17 +154,17 @@ struct SettingsStoreCoverageTests {
     }
 
     @Test
-    func `token cost usage source detection`() throws {
+    func `token token usage source detection`() throws {
         let fileManager = FileManager.default
         let root = fileManager.temporaryDirectory.appendingPathComponent(
-            "token-cost-\(UUID().uuidString)",
+            "token-usage-\(UUID().uuidString)",
             isDirectory: true)
         let codexRoot = root.appendingPathComponent("sessions", isDirectory: true)
         try fileManager.createDirectory(at: codexRoot, withIntermediateDirectories: true)
         let codexFile = codexRoot.appendingPathComponent("usage.jsonl")
         fileManager.createFile(atPath: codexFile.path, contents: Data("{}".utf8))
 
-        #expect(SettingsStore.hasAnyTokenCostUsageSources(
+        #expect(SettingsStore.hasAnyTokenUsageSources(
             env: ["CODEX_HOME": root.path],
             fileManager: fileManager))
 
@@ -176,7 +176,7 @@ struct SettingsStoreCoverageTests {
         let claudeFile = claudeProjects.appendingPathComponent("usage.jsonl")
         fileManager.createFile(atPath: claudeFile.path, contents: Data("{}".utf8))
 
-        #expect(SettingsStore.hasAnyTokenCostUsageSources(
+        #expect(SettingsStore.hasAnyTokenUsageSources(
             env: ["CLAUDE_CONFIG_DIR": claudeRoot.path],
             fileManager: fileManager))
     }

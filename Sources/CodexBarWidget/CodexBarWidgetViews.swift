@@ -491,10 +491,7 @@ private struct UsageHistoryChart: View {
     let color: Color
 
     var body: some View {
-        let values = self.points.map { point -> Double in
-            if let cost = point.costUSD { return cost }
-            return Double(point.totalTokens ?? 0)
-        }
+        let values = self.points.map { Double($0.totalTokens ?? 0) }
         let maxValue = values.max() ?? 0
         HStack(alignment: .bottom, spacing: 2) {
             ForEach(values.indices, id: \.self) { index in
@@ -599,23 +596,6 @@ enum WidgetFormat {
         formatter.maximumFractionDigits = 2
         formatter.minimumFractionDigits = 0
         return formatter.string(from: NSNumber(value: value)) ?? String(format: "%.2f", value)
-    }
-
-    static func costAndTokens(cost: Double?, tokens: Int?) -> String {
-        let costText = cost.map(self.usd) ?? "—"
-        if let tokens {
-            return "\(costText) · \(self.tokenCount(tokens))"
-        }
-        return costText
-    }
-
-    static func usd(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = "USD"
-        formatter.maximumFractionDigits = 2
-        formatter.minimumFractionDigits = 2
-        return formatter.string(from: NSNumber(value: value)) ?? String(format: "$%.2f", value)
     }
 
     static func tokenCount(_ value: Int) -> String {

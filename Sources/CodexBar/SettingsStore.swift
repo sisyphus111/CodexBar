@@ -174,7 +174,7 @@ final class SettingsStore {
         LaunchAtLoginManager.setEnabled(self.launchAtLogin)
         self.runInitialProviderDetectionIfNeeded()
         self.ensureAlibabaProviderAutoEnabledIfNeeded()
-        self.applyTokenCostDefaultIfNeeded()
+        self.applyTokenUsageDefaultIfNeeded()
         if self.claudeUsageDataSource != .cli { self.claudeWebExtrasEnabled = false }
         self.openAIWebAccessEnabled = false
         self.openAIWebBatterySaverEnabled = false
@@ -237,7 +237,15 @@ extension SettingsStore {
             resolvedPreferences = Dictionary(
                 uniqueKeysWithValues: UsageProvider.allCases.map { ($0.rawValue, legacyPreference.rawValue) })
         }
-        let costUsageEnabled = userDefaults.object(forKey: "tokenCostUsageEnabled") as? Bool ?? false
+        let tokenUsageEnabled = userDefaults.object(forKey: "tokenUsageEnabled") as? Bool
+            ?? userDefaults.object(forKey: "tokenCostUsageEnabled") as? Bool
+            ?? false
+        if userDefaults.object(forKey: "tokenUsageEnabled") == nil,
+           userDefaults.object(forKey: "tokenCostUsageEnabled") != nil
+        {
+            userDefaults.set(tokenUsageEnabled, forKey: "tokenUsageEnabled")
+            userDefaults.removeObject(forKey: "tokenCostUsageEnabled")
+        }
         let hidePersonalInfo = userDefaults.object(forKey: "hidePersonalInfo") as? Bool ?? false
         let randomBlinkEnabled = userDefaults.object(forKey: "randomBlinkEnabled") as? Bool ?? false
         let confettiOnWeeklyLimitResetsEnabled = userDefaults.object(
@@ -283,7 +291,7 @@ extension SettingsStore {
             historicalTrackingEnabled: historicalTrackingEnabled,
             showAllTokenAccountsInMenu: showAllTokenAccountsInMenu,
             menuBarMetricPreferencesRaw: resolvedPreferences,
-            costUsageEnabled: costUsageEnabled,
+            tokenUsageEnabled: tokenUsageEnabled,
             hidePersonalInfo: hidePersonalInfo,
             randomBlinkEnabled: randomBlinkEnabled,
             confettiOnWeeklyLimitResetsEnabled: confettiOnWeeklyLimitResetsEnabled,

@@ -25,8 +25,6 @@ extension CodexBarCLI {
         switch command {
         case "usage":
             print(Self.usageHelp(version: version))
-        case "cost":
-            print(Self.costHelp(version: version))
         case "config", "validate", "dump":
             print(Self.configHelp(version: version))
         default:

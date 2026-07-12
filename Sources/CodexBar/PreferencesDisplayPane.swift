@@ -76,7 +76,7 @@ struct DisplayPane: View {
                         binding: self.$settings.resetTimesShowAbsolute)
                     PreferenceToggleRow(
                         title: "Show extra usage",
-                        subtitle: "Show Claude Extra usage and token cost sections in the menu.",
+                        subtitle: "Show Claude Extra usage and local token history in the menu.",
                         binding: self.$settings.showOptionalCreditsAndExtraUsage)
                     PreferenceToggleRow(
                         title: "Show all token accounts",

@@ -543,7 +543,7 @@ struct ProvidersPane: View {
         let creditsError: String?
         let dashboard: OpenAIDashboardSnapshot?
         let dashboardError: String?
-        let tokenSnapshot: CostUsageTokenSnapshot?
+        let tokenSnapshot: TokenUsageTokenSnapshot?
         let tokenError: String?
         if let codexProjection {
             credits = codexProjection.credits?.snapshot
@@ -595,7 +595,7 @@ struct ProvidersPane: View {
             lastError: codexProjection?.userFacingErrors.usage ?? self.store.userFacingError(for: provider),
             usageBarsShowUsed: self.settings.usageBarsShowUsed,
             resetTimeDisplayStyle: self.settings.resetTimeDisplayStyle,
-            tokenCostUsageEnabled: self.settings.isCostUsageEffectivelyEnabled(for: provider),
+            tokenUsageEnabled: self.settings.isTokenUsageEffectivelyEnabled(for: provider),
             showOptionalCreditsAndExtraUsage: self.settings.showOptionalCreditsAndExtraUsage,
             hidePersonalInfo: self.settings.hidePersonalInfo,
             weeklyPace: weeklyPace,

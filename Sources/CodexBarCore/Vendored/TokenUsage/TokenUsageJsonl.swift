@@ -1,6 +1,6 @@
 import Foundation
 
-enum CostUsageJsonl {
+enum TokenUsageJsonl {
     struct Line {
         let bytes: Data
         let wasTruncated: Bool

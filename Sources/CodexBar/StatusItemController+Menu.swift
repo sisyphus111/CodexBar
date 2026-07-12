@@ -13,7 +13,7 @@ extension StatusItemController {
     private static let menuOpenRefreshDelay: Duration = .seconds(1.2)
     static let usageBreakdownChartID = "usageBreakdownChart"
     static let creditsHistoryChartID = "creditsHistoryChart"
-    static let costHistoryChartID = "costHistoryChart"
+    static let tokenHistoryChartID = "tokenHistoryChart"
     static let usageHistoryChartID = "usageHistoryChart"
 
     private func shortcut(for action: MenuDescriptor.MenuAction) -> (key: String, modifiers: NSEvent.ModifierFlags)? {
@@ -329,7 +329,7 @@ extension StatusItemController {
     private struct OpenAIWebContext {
         let hasUsageBreakdown: Bool
         let hasCreditsHistory: Bool
-        let hasCostHistory: Bool
+        let hasTokenHistory: Bool
         let hasOpenAIWebMenuItems: Bool
     }
 
@@ -350,14 +350,14 @@ extension StatusItemController {
             surface: .liveCard)
         let hasCreditsHistory = codexProjection?.hasCreditsHistory == true
         let hasUsageBreakdown = codexProjection?.hasUsageBreakdown == true
-        let hasCostHistory = self.settings.isCostUsageEffectivelyEnabled(for: currentProvider) &&
+        let hasTokenHistory = self.settings.isTokenUsageEffectivelyEnabled(for: currentProvider) &&
             (self.store.tokenSnapshot(for: currentProvider)?.daily.isEmpty == false)
         let hasOpenAIWebMenuItems = !showAllTokenAccounts &&
-            (hasCreditsHistory || hasUsageBreakdown || hasCostHistory)
+            (hasCreditsHistory || hasUsageBreakdown || hasTokenHistory)
         return OpenAIWebContext(
             hasUsageBreakdown: hasUsageBreakdown,
             hasCreditsHistory: hasCreditsHistory,
-            hasCostHistory: hasCostHistory,
+            hasTokenHistory: hasTokenHistory,
             hasOpenAIWebMenuItems: hasOpenAIWebMenuItems)
     }
 
@@ -483,7 +483,7 @@ extension StatusItemController {
             let webItems = OpenAIWebMenuItems(
                 hasUsageBreakdown: context.openAIContext.hasUsageBreakdown,
                 hasCreditsHistory: context.openAIContext.hasCreditsHistory,
-                hasCostHistory: context.openAIContext.hasCostHistory)
+                hasTokenHistory: context.openAIContext.hasTokenHistory)
             self.addMenuCardSections(
                 to: menu,
                 model: model,
@@ -516,8 +516,8 @@ extension StatusItemController {
             if context.hasCreditsHistory {
                 _ = self.addCreditsHistorySubmenu(to: menu)
             }
-            if context.hasCostHistory {
-                _ = self.addCostHistorySubmenu(to: menu, provider: currentProvider)
+            if context.hasTokenHistory {
+                _ = self.addTokenHistorySubmenu(to: menu, provider: currentProvider)
             }
         }
         menu.addItem(.separator())
@@ -1021,7 +1021,7 @@ extension StatusItemController {
         let hasUsageBlock = !model.metrics.isEmpty || model.placeholder != nil
         let hasCredits = model.creditsText != nil
         let hasExtraUsage = model.providerCost != nil
-        let hasCost = model.tokenUsage != nil
+        let hasTokenUsage = model.tokenUsage != nil
         let bottomPadding = CGFloat(hasCredits ? 4 : 6)
         let sectionSpacing = CGFloat(6)
         let usageBottomPadding = bottomPadding
@@ -1050,12 +1050,12 @@ extension StatusItemController {
                 submenu: usageSubmenu))
         }
 
-        if hasCredits || hasExtraUsage || hasCost {
+        if hasCredits || hasExtraUsage || hasTokenUsage {
             menu.addItem(.separator())
         }
 
         if hasCredits {
-            if hasExtraUsage || hasCost {
+            if hasExtraUsage || hasTokenUsage {
                 menu.addItem(.separator())
             }
             let creditsView = UsageMenuCardCreditsSectionView(
@@ -1085,21 +1085,21 @@ extension StatusItemController {
                 id: "menuCardExtraUsage",
                 width: width))
         }
-        if hasCost {
+        if hasTokenUsage {
             if hasCredits || hasExtraUsage {
                 menu.addItem(.separator())
             }
-            let costView = UsageMenuCardCostSectionView(
+            let tokenUsageView = UsageMenuCardTokenUsageSectionView(
                 model: model,
                 topPadding: sectionSpacing,
                 bottomPadding: bottomPadding,
                 width: width)
-            let costSubmenu = webItems.hasCostHistory ? self.makeCostHistorySubmenu(provider: provider) : nil
+            let tokenUsageSubmenu = webItems.hasTokenHistory ? self.makeTokenHistorySubmenu(provider: provider) : nil
             menu.addItem(self.makeMenuCardItem(
-                costView,
-                id: "menuCardCost",
+                tokenUsageView,
+                id: "menuCardTokenUsage",
                 width: width,
-                submenu: costSubmenu))
+                submenu: tokenUsageSubmenu))
         }
     }
 
@@ -1184,8 +1184,8 @@ extension StatusItemController {
     }
 
     @discardableResult
-    private func addCostHistorySubmenu(to menu: NSMenu, provider: UsageProvider) -> Bool {
-        guard let submenu = self.makeCostHistorySubmenu(provider: provider) else { return false }
+    private func addTokenHistorySubmenu(to menu: NSMenu, provider: UsageProvider) -> Bool {
+        guard let submenu = self.makeTokenHistorySubmenu(provider: provider) else { return false }
         let item = NSMenuItem(title: "Usage history (30 days)", action: nil, keyEquivalent: "")
         item.isEnabled = true
         item.submenu = submenu
@@ -1253,17 +1253,17 @@ extension StatusItemController {
         return self.makeHostedSubviewPlaceholderMenu(chartID: Self.creditsHistoryChartID)
     }
 
-    private func makeCostHistorySubmenu(provider: UsageProvider) -> NSMenu? {
+    private func makeTokenHistorySubmenu(provider: UsageProvider) -> NSMenu? {
         guard provider == .codex || provider == .claude || provider == .vertexai else { return nil }
         guard self.store.tokenSnapshot(for: provider)?.daily.isEmpty == false else { return nil }
-        return self.makeHostedSubviewPlaceholderMenu(chartID: Self.costHistoryChartID, provider: provider)
+        return self.makeHostedSubviewPlaceholderMenu(chartID: Self.tokenHistoryChartID, provider: provider)
     }
 
     private func isHostedSubviewMenu(_ menu: NSMenu) -> Bool {
         let ids: Set = [
             Self.usageBreakdownChartID,
             Self.creditsHistoryChartID,
-            Self.costHistoryChartID,
+            Self.tokenHistoryChartID,
             Self.usageHistoryChartID,
         ]
         return menu.items.contains { item in
@@ -1320,7 +1320,7 @@ extension StatusItemController {
         let creditsError: String?
         let dashboard: OpenAIDashboardSnapshot?
         let dashboardError: String?
-        let tokenSnapshot: CostUsageTokenSnapshot?
+        let tokenSnapshot: TokenUsageTokenSnapshot?
         let tokenError: String?
         if let codexProjection {
             credits = codexProjection.credits?.snapshot
@@ -1381,7 +1381,7 @@ extension StatusItemController {
                 ?? self.store.userFacingError(for: target),
             usageBarsShowUsed: self.settings.usageBarsShowUsed,
             resetTimeDisplayStyle: self.settings.resetTimeDisplayStyle,
-            tokenCostUsageEnabled: self.settings.isCostUsageEffectivelyEnabled(for: target),
+            tokenUsageEnabled: self.settings.isTokenUsageEffectivelyEnabled(for: target),
             showOptionalCreditsAndExtraUsage: self.settings.showOptionalCreditsAndExtraUsage,
             sourceLabel: sourceLabel,
             kiloAutoMode: kiloAutoMode,

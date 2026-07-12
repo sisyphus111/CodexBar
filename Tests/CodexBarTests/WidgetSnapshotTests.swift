@@ -18,12 +18,10 @@ struct WidgetSnapshotTests {
             creditsRemaining: 123.4,
             codeReviewRemainingPercent: 80,
             tokenUsage: WidgetSnapshot.TokenUsageSummary(
-                sessionCostUSD: 12.3,
                 sessionTokens: 1200,
-                last30DaysCostUSD: 456.7,
                 last30DaysTokens: 9800),
             dailyUsage: [
-                WidgetSnapshot.DailyUsagePoint(dayKey: "2025-12-20", totalTokens: 1200, costUSD: 12.3),
+                WidgetSnapshot.DailyUsagePoint(dayKey: "2025-12-20", totalTokens: 1200),
             ])
 
         let snapshot = WidgetSnapshot(
@@ -57,12 +55,10 @@ struct WidgetSnapshotTests {
             creditsRemaining: nil,
             codeReviewRemainingPercent: nil,
             tokenUsage: WidgetSnapshot.TokenUsageSummary(
-                sessionCostUSD: 1.25,
                 sessionTokens: 4200,
-                last30DaysCostUSD: 19.75,
                 last30DaysTokens: 58000),
             dailyUsage: [
-                WidgetSnapshot.DailyUsagePoint(dayKey: "2026-02-27", totalTokens: 4200, costUSD: 1.25),
+                WidgetSnapshot.DailyUsagePoint(dayKey: "2026-02-27", totalTokens: 4200),
             ])
 
         let snapshot = WidgetSnapshot(

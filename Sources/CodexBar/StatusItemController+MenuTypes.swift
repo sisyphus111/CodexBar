@@ -42,7 +42,7 @@ struct OverviewMenuCardRowView: View {
 struct OpenAIWebMenuItems {
     let hasUsageBreakdown: Bool
     let hasCreditsHistory: Bool
-    let hasCostHistory: Bool
+    let hasTokenHistory: Bool
 }
 
 struct TokenAccountMenuDisplay {

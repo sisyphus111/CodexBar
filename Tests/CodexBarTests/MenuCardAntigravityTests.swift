@@ -39,7 +39,7 @@ struct MenuCardAntigravityTests {
             lastError: nil,
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: false,
             now: now))
@@ -101,7 +101,7 @@ struct MenuCardAntigravityTests {
             lastError: nil,
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: false,
             now: now))
@@ -146,7 +146,7 @@ struct MenuCardAntigravityTests {
             lastError: nil,
             usageBarsShowUsed: true,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: false,
             now: now))

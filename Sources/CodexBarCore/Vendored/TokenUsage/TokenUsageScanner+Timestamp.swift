@@ -1,6 +1,6 @@
 import Foundation
 
-private final class CostUsageISO8601FormatterBox: @unchecked Sendable {
+private final class TokenUsageISO8601FormatterBox: @unchecked Sendable {
     let lock = NSLock()
     let withFractional: ISO8601DateFormatter = {
         let fmt = ISO8601DateFormatter()
@@ -15,8 +15,8 @@ private final class CostUsageISO8601FormatterBox: @unchecked Sendable {
     }()
 }
 
-private enum CostUsageTimestampParser {
-    static let box = CostUsageISO8601FormatterBox()
+private enum TokenUsageTimestampParser {
+    static let box = TokenUsageISO8601FormatterBox()
 
     static func parseISO(_ text: String) -> Date? {
         self.box.lock.lock()
@@ -25,9 +25,9 @@ private enum CostUsageTimestampParser {
     }
 }
 
-extension CostUsageScanner {
+extension TokenUsageScanner {
     static func dateFromTimestamp(_ text: String) -> Date? {
-        CostUsageTimestampParser.parseISO(text)
+        TokenUsageTimestampParser.parseISO(text)
     }
 
     static func dayKeyFromTimestamp(_ text: String) -> String? {
@@ -110,8 +110,8 @@ extension CostUsageScanner {
     }
 
     static func dayKeyFromParsedISO(_ text: String) -> String? {
-        guard let date = CostUsageTimestampParser.parseISO(text) else { return nil }
-        return CostUsageDayRange.dayKey(from: date)
+        guard let date = TokenUsageTimestampParser.parseISO(text) else { return nil }
+        return TokenUsageDayRange.dayKey(from: date)
     }
 
     private static func parse2(_ bytes: [UInt8], at index: Int) -> Int? {

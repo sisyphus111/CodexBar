@@ -1,11 +1,11 @@
 import Foundation
 
-public struct ProviderTokenCostConfig: Sendable {
-    public let supportsTokenCost: Bool
+public struct ProviderTokenUsageConfig: Sendable {
+    public let supportsTokenUsage: Bool
     public let noDataMessage: @Sendable () -> String
 
-    public init(supportsTokenCost: Bool, noDataMessage: @escaping @Sendable () -> String) {
-        self.supportsTokenCost = supportsTokenCost
+    public init(supportsTokenUsage: Bool, noDataMessage: @escaping @Sendable () -> String) {
+        self.supportsTokenUsage = supportsTokenUsage
         self.noDataMessage = noDataMessage
     }
 }
@@ -14,7 +14,7 @@ public struct ProviderDescriptor: Sendable {
     public let id: UsageProvider
     public let metadata: ProviderMetadata
     public let branding: ProviderBranding
-    public let tokenCost: ProviderTokenCostConfig
+    public let tokenUsage: ProviderTokenUsageConfig
     public let fetchPlan: ProviderFetchPlan
     public let cli: ProviderCLIConfig
 
@@ -22,14 +22,14 @@ public struct ProviderDescriptor: Sendable {
         id: UsageProvider,
         metadata: ProviderMetadata,
         branding: ProviderBranding,
-        tokenCost: ProviderTokenCostConfig,
+        tokenUsage: ProviderTokenUsageConfig,
         fetchPlan: ProviderFetchPlan,
         cli: ProviderCLIConfig)
     {
         self.id = id
         self.metadata = metadata
         self.branding = branding
-        self.tokenCost = tokenCost
+        self.tokenUsage = tokenUsage
         self.fetchPlan = fetchPlan
         self.cli = cli
     }

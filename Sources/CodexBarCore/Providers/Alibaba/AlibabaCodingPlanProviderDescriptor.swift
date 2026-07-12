@@ -47,9 +47,9 @@ public enum AlibabaCodingPlanProviderDescriptor {
                 iconStyle: .alibaba,
                 iconResourceName: "ProviderIcon-alibaba",
                 color: ProviderColor(red: 1.0, green: 106 / 255, blue: 0)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: false,
-                noDataMessage: { "Alibaba Coding Plan cost summary is not supported." }),
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: false,
+                noDataMessage: { "Alibaba Coding Plan token history is not supported." }),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .web, .api],
                 pipeline: ProviderFetchPipeline(resolveStrategies: self.resolveStrategies)),

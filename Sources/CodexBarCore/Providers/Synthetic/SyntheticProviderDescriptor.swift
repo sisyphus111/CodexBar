@@ -27,9 +27,9 @@ public enum SyntheticProviderDescriptor {
                 iconStyle: .synthetic,
                 iconResourceName: "ProviderIcon-synthetic",
                 color: ProviderColor(red: 20 / 255, green: 20 / 255, blue: 20 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: false,
-                noDataMessage: { "Synthetic cost summary is not supported." }),
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: false,
+                noDataMessage: { "Synthetic token history is not supported." }),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .api],
                 pipeline: ProviderFetchPipeline(resolveStrategies: { _ in [SyntheticAPIFetchStrategy()] })),

@@ -2,7 +2,7 @@ import CodexBarCore
 import Foundation
 
 extension UsageStore {
-    func tokenSnapshot(for provider: UsageProvider) -> CostUsageTokenSnapshot? {
+    func tokenSnapshot(for provider: UsageProvider) -> TokenUsageTokenSnapshot? {
         self.tokenSnapshots[provider]
     }
 
@@ -18,16 +18,16 @@ extension UsageStore {
         self.tokenRefreshInFlight.contains(provider)
     }
 
-    nonisolated static func costUsageCacheDirectory(
+    nonisolated static func tokenUsageCacheDirectory(
         fileManager: FileManager = .default) -> URL
     {
         let root = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first!
         return root
             .appendingPathComponent("CodexBar", isDirectory: true)
-            .appendingPathComponent("cost-usage", isDirectory: true)
+            .appendingPathComponent("token-usage", isDirectory: true)
     }
 
-    nonisolated static func tokenCostNoDataMessage(for provider: UsageProvider) -> String {
-        ProviderDescriptorRegistry.descriptor(for: provider).tokenCost.noDataMessage()
+    nonisolated static func tokenUsageNoDataMessage(for provider: UsageProvider) -> String {
+        ProviderDescriptorRegistry.descriptor(for: provider).tokenUsage.noDataMessage()
     }
 }

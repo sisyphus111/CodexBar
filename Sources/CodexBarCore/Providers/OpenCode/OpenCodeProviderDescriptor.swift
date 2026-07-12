@@ -28,9 +28,9 @@ public enum OpenCodeProviderDescriptor {
                 iconStyle: .opencode,
                 iconResourceName: "ProviderIcon-opencode",
                 color: ProviderColor(red: 59 / 255, green: 130 / 255, blue: 246 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: false,
-                noDataMessage: { "OpenCode cost summary is not supported." }),
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: false,
+                noDataMessage: { "OpenCode token history is not supported." }),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .web],
                 pipeline: ProviderFetchPipeline(resolveStrategies: { _ in [OpenCodeUsageFetchStrategy()] })),

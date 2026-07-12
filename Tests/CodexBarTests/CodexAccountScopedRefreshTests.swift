@@ -17,11 +17,9 @@ struct CodexAccountScopedRefreshTests {
         let staleSnapshot = self.codexSnapshot(email: "alpha@example.com", usedPercent: 10)
         let staleCredits = self.credits(remaining: 42)
         let staleDashboard = self.dashboard(email: "alpha@example.com", creditsRemaining: 42, usedPercent: 20)
-        let tokenSnapshot = CostUsageTokenSnapshot(
+        let tokenSnapshot = TokenUsageTokenSnapshot(
             sessionTokens: 120,
-            sessionCostUSD: 1.2,
             last30DaysTokens: 900,
-            last30DaysCostUSD: 9.0,
             daily: [],
             updatedAt: Date())
         var widgetSnapshots: [WidgetSnapshot] = []

@@ -1,6 +1,6 @@
 import Foundation
 
-extension CostUsageScanner {
+extension TokenUsageScanner {
     // MARK: - Claude
 
     private static func defaultClaudeProjectsRoots(options: Options) -> [URL] {
@@ -33,7 +33,7 @@ extension CostUsageScanner {
 
     static func parseClaudeFile(
         fileURL: URL,
-        range: CostUsageDayRange,
+        range: TokenUsageDayRange,
         providerFilter: ClaudeLogProviderFilter,
         startOffset: Int64 = 0) -> ClaudeParseResult
     {
@@ -42,20 +42,18 @@ extension CostUsageScanner {
             let cacheRead: Int
             let cacheCreate: Int
             let output: Int
-            let costNanos: Int
         }
 
         func add(dayKey: String, model: String, tokens: ClaudeTokens, days: inout [String: [String: [Int]]]) {
-            guard CostUsageDayRange.isInRange(dayKey: dayKey, since: range.scanSinceKey, until: range.scanUntilKey)
+            guard TokenUsageDayRange.isInRange(dayKey: dayKey, since: range.scanSinceKey, until: range.scanUntilKey)
             else { return }
-            let normModel = CostUsagePricing.normalizeClaudeModel(model)
+            let normModel = TokenUsageModelNormalizer.claude(model)
             var dayModels = days[dayKey] ?? [:]
-            var packed = dayModels[normModel] ?? [0, 0, 0, 0, 0]
+            var packed = dayModels[normModel] ?? [0, 0, 0, 0]
             packed[0] = (packed[safe: 0] ?? 0) + tokens.input
             packed[1] = (packed[safe: 1] ?? 0) + tokens.cacheRead
             packed[2] = (packed[safe: 2] ?? 0) + tokens.cacheCreate
             packed[3] = (packed[safe: 3] ?? 0) + tokens.output
-            packed[4] = (packed[safe: 4] ?? 0) + tokens.costNanos
             dayModels[normModel] = packed
             days[dayKey] = dayModels
         }
@@ -78,9 +76,8 @@ extension CostUsageScanner {
         let maxLineBytes = 512 * 1024
         // Keep the full line so usage at the tail isn't dropped on large tool outputs.
         let prefixBytes = maxLineBytes
-        let costScale = 1_000_000_000.0
 
-        let parsedBytes = (try? CostUsageJsonl.scan(
+        let parsedBytes = (try? TokenUsageJsonl.scan(
             fileURL: fileURL,
             offset: startOffset,
             maxLineBytes: maxLineBytes,
@@ -111,21 +108,13 @@ extension CostUsageScanner {
                 let output = max(0, toInt(usage["output_tokens"]))
                 if input == 0, cacheCreate == 0, cacheRead == 0, output == 0 { return }
 
-                let cost = CostUsagePricing.claudeCostUSD(
-                    model: model,
-                    inputTokens: input,
-                    cacheReadInputTokens: cacheRead,
-                    cacheCreationInputTokens: cacheCreate,
-                    outputTokens: output)
-                let costNanos = cost.map { Int(($0 * costScale).rounded()) } ?? 0
                 let tokens = ClaudeTokens(
                     input: input,
                     cacheRead: cacheRead,
                     cacheCreate: cacheCreate,
-                    output: output,
-                    costNanos: costNanos)
+                    output: output)
 
-                guard CostUsageDayRange.isInRange(dayKey: dayKey, since: range.scanSinceKey, until: range.scanUntilKey)
+                guard TokenUsageDayRange.isInRange(dayKey: dayKey, since: range.scanSinceKey, until: range.scanUntilKey)
                 else { return }
 
                 let messageId = message["id"] as? String
@@ -134,7 +123,7 @@ extension CostUsageScanner {
                     ?? obj["session_id"] as? String
                     ?? (obj["metadata"] as? [String: Any])?["sessionId"] as? String
                     ?? (message["metadata"] as? [String: Any])?["sessionId"] as? String
-                let normalizedModel = CostUsagePricing.normalizeClaudeModel(model)
+                let normalizedModel = TokenUsageModelNormalizer.claude(model)
                 let row = ClaudeUsageRow(
                     dayKey: dayKey,
                     model: normalizedModel,
@@ -146,8 +135,7 @@ extension CostUsageScanner {
                     input: tokens.input,
                     cacheRead: tokens.cacheRead,
                     cacheCreate: tokens.cacheCreate,
-                    output: tokens.output,
-                    costNanos: tokens.costNanos)
+                    output: tokens.output)
 
                 // Streaming chunks share message.id + requestId inside a file.
                 // Keep overwriting so the final cumulative chunk wins.
@@ -167,8 +155,7 @@ extension CostUsageScanner {
                 input: row.input,
                 cacheRead: row.cacheRead,
                 cacheCreate: row.cacheCreate,
-                output: row.output,
-                costNanos: row.costNanos)
+                output: row.output)
             add(dayKey: row.dayKey, model: row.model, tokens: tokens, days: &days)
         }
 
@@ -226,18 +213,17 @@ extension CostUsageScanner {
         return lhs.path < rhs.path
     }
 
-    private static func rebuildClaudeDays(cache: inout CostUsageCache) {
+    private static func rebuildClaudeDays(cache: inout TokenUsageCache) {
         var days: [String: [String: [Int]]] = [:]
         var winners: [String: (path: String, row: ClaudeUsageRow)] = [:]
 
         func addRow(_ row: ClaudeUsageRow) {
             var dayModels = days[row.dayKey] ?? [:]
-            var packed = dayModels[row.model] ?? [0, 0, 0, 0, 0]
+            var packed = dayModels[row.model] ?? [0, 0, 0, 0]
             packed[0] = (packed[safe: 0] ?? 0) + row.input
             packed[1] = (packed[safe: 1] ?? 0) + row.cacheRead
             packed[2] = (packed[safe: 2] ?? 0) + row.cacheCreate
             packed[3] = (packed[safe: 3] ?? 0) + row.output
-            packed[4] = (packed[safe: 4] ?? 0) + row.costNanos
             dayModels[row.model] = packed
             days[row.dayKey] = dayModels
         }
@@ -271,7 +257,7 @@ extension CostUsageScanner {
         mtimeMs: Int64,
         size: Int64,
         rows: [ClaudeUsageRow],
-        parsedBytes: Int64?) -> CostUsageFileUsage
+        parsedBytes: Int64?) -> TokenUsageFileUsage
     {
         makeFileUsage(
             mtimeUnixMs: mtimeMs,
@@ -404,12 +390,12 @@ extension CostUsageScanner {
     }
 
     private final class ClaudeScanState {
-        var cache: CostUsageCache
+        var cache: TokenUsageCache
         var touched: Set<String>
-        let range: CostUsageDayRange
+        let range: TokenUsageDayRange
         let providerFilter: ClaudeLogProviderFilter
 
-        init(cache: CostUsageCache, range: CostUsageDayRange, providerFilter: ClaudeLogProviderFilter) {
+        init(cache: TokenUsageCache, range: TokenUsageDayRange, providerFilter: ClaudeLogProviderFilter) {
             self.cache = cache
             self.touched = []
             self.range = range
@@ -526,11 +512,11 @@ extension CostUsageScanner {
 
     static func loadClaudeDaily(
         provider: UsageProvider,
-        range: CostUsageDayRange,
+        range: TokenUsageDayRange,
         now: Date,
-        options: Options) -> CostUsageDailyReport
+        options: Options) -> TokenUsageDailyReport
     {
-        var cache = CostUsageCacheIO.load(provider: provider, cacheRoot: options.cacheRoot)
+        var cache = TokenUsageCacheIO.load(provider: provider, cacheRoot: options.cacheRoot)
         let nowMs = Int64(now.timeIntervalSince1970 * 1000)
 
         let refreshMs = Int64(max(0, options.refreshMinIntervalSeconds) * 1000)
@@ -543,7 +529,7 @@ extension CostUsageScanner {
 
         if shouldRefresh {
             if options.forceRescan {
-                cache = CostUsageCache()
+                cache = TokenUsageCache()
             }
             let scanState = ClaudeScanState(cache: cache, range: range, providerFilter: providerFilter)
 
@@ -564,28 +550,25 @@ extension CostUsageScanner {
             Self.rebuildClaudeDays(cache: &cache)
             Self.pruneDays(cache: &cache, sinceKey: range.scanSinceKey, untilKey: range.scanUntilKey)
             cache.lastScanUnixMs = nowMs
-            CostUsageCacheIO.save(provider: provider, cache: cache, cacheRoot: options.cacheRoot)
+            TokenUsageCacheIO.save(provider: provider, cache: cache, cacheRoot: options.cacheRoot)
         }
 
         return Self.buildClaudeReportFromCache(cache: cache, range: range)
     }
 
     private static func buildClaudeReportFromCache(
-        cache: CostUsageCache,
-        range: CostUsageDayRange) -> CostUsageDailyReport
+        cache: TokenUsageCache,
+        range: TokenUsageDayRange) -> TokenUsageDailyReport
     {
-        var entries: [CostUsageDailyReport.Entry] = []
+        var entries: [TokenUsageDailyReport.Entry] = []
         var totalInput = 0
         var totalOutput = 0
         var totalCacheRead = 0
         var totalCacheCreate = 0
         var totalTokens = 0
-        var totalCost: Double = 0
-        var costSeen = false
-        let costScale = 1_000_000_000.0
 
         let dayKeys = cache.days.keys.sorted().filter {
-            CostUsageDayRange.isInRange(dayKey: $0, since: range.sinceKey, until: range.untilKey)
+            TokenUsageDayRange.isInRange(dayKey: $0, since: range.sinceKey, until: range.untilKey)
         }
 
         for day in dayKeys {
@@ -597,17 +580,13 @@ extension CostUsageScanner {
             var dayCacheRead = 0
             var dayCacheCreate = 0
 
-            var breakdown: [CostUsageDailyReport.ModelBreakdown] = []
-            var dayCost: Double = 0
-            var dayCostSeen = false
-
+            var breakdown: [TokenUsageDailyReport.ModelBreakdown] = []
             for model in modelNames {
                 let packed = models[model] ?? [0, 0, 0, 0]
                 let input = packed[safe: 0] ?? 0
                 let cacheRead = packed[safe: 1] ?? 0
                 let cacheCreate = packed[safe: 2] ?? 0
                 let output = packed[safe: 3] ?? 0
-                let cachedCost = packed[safe: 4] ?? 0
                 let totalTokens = input + cacheRead + cacheCreate + output
 
                 // Cache tokens are tracked separately; totalTokens includes input + cache.
@@ -616,37 +595,22 @@ extension CostUsageScanner {
                 dayCacheCreate += cacheCreate
                 dayOutput += output
 
-                let cost = cachedCost > 0
-                    ? Double(cachedCost) / costScale
-                    : CostUsagePricing.claudeCostUSD(
-                        model: model,
-                        inputTokens: input,
-                        cacheReadInputTokens: cacheRead,
-                        cacheCreationInputTokens: cacheCreate,
-                        outputTokens: output)
                 breakdown.append(
-                    CostUsageDailyReport.ModelBreakdown(
+                    TokenUsageDailyReport.ModelBreakdown(
                         modelName: model,
-                        costUSD: cost,
                         totalTokens: totalTokens))
-                if let cost {
-                    dayCost += cost
-                    dayCostSeen = true
-                }
             }
 
             let sortedBreakdown = Self.sortedModelBreakdowns(breakdown)
 
             let dayTotal = dayInput + dayCacheRead + dayCacheCreate + dayOutput
-            let entryCost = dayCostSeen ? dayCost : nil
-            entries.append(CostUsageDailyReport.Entry(
+            entries.append(TokenUsageDailyReport.Entry(
                 date: day,
                 inputTokens: dayInput,
                 outputTokens: dayOutput,
                 cacheReadTokens: dayCacheRead,
                 cacheCreationTokens: dayCacheCreate,
                 totalTokens: dayTotal,
-                costUSD: entryCost,
                 modelsUsed: modelNames,
                 modelBreakdowns: sortedBreakdown))
 
@@ -655,22 +619,17 @@ extension CostUsageScanner {
             totalCacheRead += dayCacheRead
             totalCacheCreate += dayCacheCreate
             totalTokens += dayTotal
-            if let entryCost {
-                totalCost += entryCost
-                costSeen = true
-            }
         }
 
-        let summary: CostUsageDailyReport.Summary? = entries.isEmpty
+        let summary: TokenUsageDailyReport.Summary? = entries.isEmpty
             ? nil
-            : CostUsageDailyReport.Summary(
+            : TokenUsageDailyReport.Summary(
                 totalInputTokens: totalInput,
                 totalOutputTokens: totalOutput,
                 cacheReadTokens: totalCacheRead,
                 cacheCreationTokens: totalCacheCreate,
-                totalTokens: totalTokens,
-                totalCostUSD: costSeen ? totalCost : nil)
+                totalTokens: totalTokens)
 
-        return CostUsageDailyReport(data: entries, summary: summary)
+        return TokenUsageDailyReport(data: entries, summary: summary)
     }
 }

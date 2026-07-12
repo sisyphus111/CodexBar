@@ -30,9 +30,9 @@ public enum CursorProviderDescriptor {
                 iconStyle: .cursor,
                 iconResourceName: "ProviderIcon-cursor",
                 color: ProviderColor(red: 0 / 255, green: 191 / 255, blue: 165 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: false,
-                noDataMessage: { "Cursor cost summary is not supported." }),
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: false,
+                noDataMessage: { "Cursor token history is not supported." }),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .cli],
                 pipeline: ProviderFetchPipeline(resolveStrategies: { _ in [CursorStatusFetchStrategy()] })),

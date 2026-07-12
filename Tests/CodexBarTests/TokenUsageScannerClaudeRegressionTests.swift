@@ -2,10 +2,10 @@ import Foundation
 import Testing
 @testable import CodexBarCore
 
-struct CostUsageScannerClaudeRegressionTests {
+struct TokenUsageScannerClaudeRegressionTests {
     @Test
     func `parseClaudeFile snapshots keep the last streaming chunk`() throws {
-        let env = try CostUsageTestEnvironment()
+        let env = try TokenUsageTestEnvironment()
         defer { env.cleanup() }
 
         let day = try env.makeLocalNoon(year: 2025, month: 12, day: 21)
@@ -51,9 +51,9 @@ struct CostUsageScannerClaudeRegressionTests {
                 ],
             ]))
 
-        let parsed = CostUsageScanner.parseClaudeFile(
+        let parsed = TokenUsageScanner.parseClaudeFile(
             fileURL: fileURL,
-            range: CostUsageScanner.CostUsageDayRange(since: day, until: day),
+            range: TokenUsageScanner.TokenUsageDayRange(since: day, until: day),
             providerFilter: .all)
 
         #expect(parsed.rows.count == 1)
@@ -65,7 +65,7 @@ struct CostUsageScannerClaudeRegressionTests {
 
     @Test
     func `parseClaudeFile snapshots keep missing id rows distinct`() throws {
-        let env = try CostUsageTestEnvironment()
+        let env = try TokenUsageTestEnvironment()
         defer { env.cleanup() }
 
         let day = try env.makeLocalNoon(year: 2025, month: 12, day: 21)
@@ -103,9 +103,9 @@ struct CostUsageScannerClaudeRegressionTests {
                 ],
             ]))
 
-        let parsed = CostUsageScanner.parseClaudeFile(
+        let parsed = TokenUsageScanner.parseClaudeFile(
             fileURL: fileURL,
-            range: CostUsageScanner.CostUsageDayRange(since: day, until: day),
+            range: TokenUsageScanner.TokenUsageDayRange(since: day, until: day),
             providerFilter: .all)
 
         #expect(parsed.rows.count == 2)
@@ -115,7 +115,7 @@ struct CostUsageScannerClaudeRegressionTests {
 
     @Test
     func `claude streaming keeps the last cumulative chunk`() throws {
-        let env = try CostUsageTestEnvironment()
+        let env = try TokenUsageTestEnvironment()
         defer { env.cleanup() }
 
         let day = try env.makeLocalNoon(year: 2025, month: 12, day: 21)
@@ -184,13 +184,13 @@ struct CostUsageScannerClaudeRegressionTests {
             relativePath: "project-a/stream-last-wins.jsonl",
             contents: env.jsonl([chunk1, chunk2, chunk3]))
 
-        var options = CostUsageScanner.Options(
+        var options = TokenUsageScanner.Options(
             codexSessionsRoot: nil,
             claudeProjectsRoots: [env.claudeProjectsRoot],
             cacheRoot: env.cacheRoot)
         options.refreshMinIntervalSeconds = 0
 
-        let report = CostUsageScanner.loadDailyReport(
+        let report = TokenUsageScanner.loadDailyReport(
             provider: .claude,
             since: day,
             until: day,
@@ -207,7 +207,7 @@ struct CostUsageScannerClaudeRegressionTests {
 
     @Test
     func `claude cross file dedup prefers parent and keeps unique sidechain rows`() throws {
-        let env = try CostUsageTestEnvironment()
+        let env = try TokenUsageTestEnvironment()
         defer { env.cleanup() }
 
         let day = try env.makeLocalNoon(year: 2025, month: 12, day: 22)
@@ -298,13 +298,13 @@ struct CostUsageScannerClaudeRegressionTests {
             relativePath: "project-a/\(sessionId)/subagents/agent-aside_question-overlap.jsonl",
             contents: env.jsonl([nonCompactOverlap, uniqueSidechain]))
 
-        var options = CostUsageScanner.Options(
+        var options = TokenUsageScanner.Options(
             codexSessionsRoot: nil,
             claudeProjectsRoots: [env.claudeProjectsRoot],
             cacheRoot: env.cacheRoot)
         options.refreshMinIntervalSeconds = 0
 
-        let report = CostUsageScanner.loadDailyReport(
+        let report = TokenUsageScanner.loadDailyReport(
             provider: .claude,
             since: day,
             until: day,
@@ -321,7 +321,7 @@ struct CostUsageScannerClaudeRegressionTests {
 
     @Test
     func `claude cross file dedup uses stable path order for same rank sidechains`() throws {
-        let env = try CostUsageTestEnvironment()
+        let env = try TokenUsageTestEnvironment()
         defer { env.cleanup() }
 
         let day = try env.makeLocalNoon(year: 2025, month: 12, day: 23)
@@ -373,13 +373,13 @@ struct CostUsageScannerClaudeRegressionTests {
             relativePath: "project-a/\(sessionId)/subagents/agent-b-second.jsonl",
             contents: env.jsonl([secondSidechain]))
 
-        var options = CostUsageScanner.Options(
+        var options = TokenUsageScanner.Options(
             codexSessionsRoot: nil,
             claudeProjectsRoots: [env.claudeProjectsRoot],
             cacheRoot: env.cacheRoot)
         options.refreshMinIntervalSeconds = 0
 
-        let report = CostUsageScanner.loadDailyReport(
+        let report = TokenUsageScanner.loadDailyReport(
             provider: .claude,
             since: day,
             until: day,
@@ -394,7 +394,7 @@ struct CostUsageScannerClaudeRegressionTests {
 
     @Test
     func `claude cross file dedup does not merge rows without session ids`() throws {
-        let env = try CostUsageTestEnvironment()
+        let env = try TokenUsageTestEnvironment()
         defer { env.cleanup() }
 
         let day = try env.makeLocalNoon(year: 2025, month: 12, day: 23)
@@ -444,13 +444,13 @@ struct CostUsageScannerClaudeRegressionTests {
             relativePath: "project-a/session-has-id/subagents/agent-a-sidechain.jsonl",
             contents: env.jsonl([sessionScoped]))
 
-        var options = CostUsageScanner.Options(
+        var options = TokenUsageScanner.Options(
             codexSessionsRoot: nil,
             claudeProjectsRoots: [env.claudeProjectsRoot],
             cacheRoot: env.cacheRoot)
         options.refreshMinIntervalSeconds = 0
 
-        let report = CostUsageScanner.loadDailyReport(
+        let report = TokenUsageScanner.loadDailyReport(
             provider: .claude,
             since: day,
             until: day,
@@ -465,7 +465,7 @@ struct CostUsageScannerClaudeRegressionTests {
 
     @Test
     func `claude rescans sessions when a new parent file overlaps cached sidechain data`() throws {
-        let env = try CostUsageTestEnvironment()
+        let env = try TokenUsageTestEnvironment()
         defer { env.cleanup() }
 
         let day = try env.makeLocalNoon(year: 2025, month: 12, day: 24)
@@ -514,13 +514,13 @@ struct CostUsageScannerClaudeRegressionTests {
             relativePath: "project-a/\(sessionId)/subagents/agent-acompact-cached.jsonl",
             contents: env.jsonl([sidechainOverlap, uniqueSidechain]))
 
-        var options = CostUsageScanner.Options(
+        var options = TokenUsageScanner.Options(
             codexSessionsRoot: nil,
             claudeProjectsRoots: [env.claudeProjectsRoot],
             cacheRoot: env.cacheRoot)
         options.refreshMinIntervalSeconds = 0
 
-        let firstReport = CostUsageScanner.loadDailyReport(
+        let firstReport = TokenUsageScanner.loadDailyReport(
             provider: .claude,
             since: day,
             until: day,
@@ -554,7 +554,7 @@ struct CostUsageScannerClaudeRegressionTests {
             relativePath: "project-a/\(sessionId).jsonl",
             contents: env.jsonl([parentOverlap]))
 
-        let secondReport = CostUsageScanner.loadDailyReport(
+        let secondReport = TokenUsageScanner.loadDailyReport(
             provider: .claude,
             since: day,
             until: day,
@@ -565,25 +565,5 @@ struct CostUsageScannerClaudeRegressionTests {
         #expect(secondReport.data[0].inputTokens == 45)
         #expect(secondReport.data[0].outputTokens == 11)
         #expect(secondReport.data[0].totalTokens == 56)
-    }
-
-    @Test
-    func `claude sonnet 4 6 pricing is available for base and dated models`() {
-        let baseCost = CostUsagePricing.claudeCostUSD(
-            model: "claude-sonnet-4-6",
-            inputTokens: 1000,
-            cacheReadInputTokens: 100,
-            cacheCreationInputTokens: 50,
-            outputTokens: 25)
-        let datedCost = CostUsagePricing.claudeCostUSD(
-            model: "claude-sonnet-4-6-20260219",
-            inputTokens: 1000,
-            cacheReadInputTokens: 100,
-            cacheCreationInputTokens: 50,
-            outputTokens: 25)
-
-        #expect(baseCost != nil)
-        #expect(datedCost != nil)
-        #expect(baseCost == datedCost)
     }
 }

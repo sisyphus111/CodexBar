@@ -28,9 +28,9 @@ public enum WarpProviderDescriptor {
                 iconStyle: .warp,
                 iconResourceName: "ProviderIcon-warp",
                 color: ProviderColor(red: 147 / 255, green: 139 / 255, blue: 180 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: false,
-                noDataMessage: { "Warp cost summary is not available." }),
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: false,
+                noDataMessage: { "Warp token history is not available." }),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .api],
                 pipeline: ProviderFetchPipeline(resolveStrategies: { _ in [WarpAPIFetchStrategy()] })),

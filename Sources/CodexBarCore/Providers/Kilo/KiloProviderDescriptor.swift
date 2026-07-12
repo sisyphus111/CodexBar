@@ -28,9 +28,9 @@ public enum KiloProviderDescriptor {
                 iconStyle: .kilo,
                 iconResourceName: "ProviderIcon-kilo",
                 color: ProviderColor(red: 242 / 255, green: 112 / 255, blue: 39 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: false,
-                noDataMessage: { "Kilo cost summary is not supported." }),
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: false,
+                noDataMessage: { "Kilo token history is not supported." }),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .api, .cli],
                 pipeline: ProviderFetchPipeline(resolveStrategies: self.resolveStrategies)),

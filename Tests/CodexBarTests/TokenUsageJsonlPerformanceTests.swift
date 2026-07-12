@@ -3,11 +3,11 @@ import Testing
 @testable import CodexBarCore
 
 @Suite(.serialized)
-struct CostUsageJsonlPerformanceTests {
+struct TokenUsageJsonlPerformanceTests {
     @Test
     func `scanner benchmark beats front buffer baseline`() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(
-            "codexbar-cost-usage-bench-\(UUID().uuidString)",
+            "codexbar-token-usage-bench-\(UUID().uuidString)",
             isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
@@ -25,7 +25,7 @@ struct CostUsageJsonlPerformanceTests {
             fileURL: fileURL,
             maxLineBytes: maxLineBytes,
             prefixBytes: prefixBytes,
-            scanner: CostUsageJsonl.scan)
+            scanner: TokenUsageJsonl.scan)
         let baselineSummary = try summarizeScan(
             fileURL: fileURL,
             maxLineBytes: maxLineBytes,
@@ -41,7 +41,7 @@ struct CostUsageJsonlPerformanceTests {
             fileURL: fileURL,
             maxLineBytes: maxLineBytes,
             prefixBytes: prefixBytes,
-            scanner: CostUsageJsonl.scan)
+            scanner: TokenUsageJsonl.scan)
         _ = try summarizeScan(
             fileURL: fileURL,
             maxLineBytes: maxLineBytes,
@@ -53,7 +53,7 @@ struct CostUsageJsonlPerformanceTests {
             fileURL: fileURL,
             maxLineBytes: maxLineBytes,
             prefixBytes: prefixBytes,
-            scanner: CostUsageJsonl.scan)
+            scanner: TokenUsageJsonl.scan)
         let baselineFastest = try fastestScanDurationNanoseconds(
             runs: 3,
             fileURL: fileURL,
@@ -79,7 +79,7 @@ private typealias JsonlScanner = (
     _ offset: Int64,
     _ maxLineBytes: Int,
     _ prefixBytes: Int,
-    _ onLine: (CostUsageJsonl.Line) -> Void) throws -> Int64
+    _ onLine: (TokenUsageJsonl.Line) -> Void) throws -> Int64
 
 private func makeBenchmarkFixture(line: String, lineCount: Int) -> Data {
     let lineBytes = Data(line.utf8)
@@ -144,7 +144,7 @@ private func scanWithFrontBufferBaseline(
     offset: Int64 = 0,
     maxLineBytes: Int,
     prefixBytes: Int,
-    onLine: (CostUsageJsonl.Line) -> Void) throws
+    onLine: (TokenUsageJsonl.Line) -> Void) throws
     -> Int64
 {
     let handle = try FileHandle(forReadingFrom: fileURL)

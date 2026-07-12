@@ -31,11 +31,11 @@ extension StatusItemController {
             self.appendUsageBreakdownChartItem(to: menu, width: width)
         case Self.creditsHistoryChartID:
             self.appendCreditsHistoryChartItem(to: menu, width: width)
-        case Self.costHistoryChartID:
+        case Self.tokenHistoryChartID:
             if let providerRawValue = placeholder.toolTip,
                let provider = UsageProvider(rawValue: providerRawValue)
             {
-                self.appendCostHistoryChartItem(to: menu, provider: provider, width: width)
+                self.appendTokenHistoryChartItem(to: menu, provider: provider, width: width)
             } else {
                 false
             }
@@ -115,7 +115,7 @@ extension StatusItemController {
     }
 
     @discardableResult
-    func appendCostHistoryChartItem(
+    func appendTokenHistoryChartItem(
         to submenu: NSMenu,
         provider: UsageProvider,
         width: CGFloat) -> Bool
@@ -126,15 +126,15 @@ extension StatusItemController {
         if !Self.menuCardRenderingEnabled {
             let chartItem = NSMenuItem()
             chartItem.isEnabled = false
-            chartItem.representedObject = Self.costHistoryChartID
+            chartItem.representedObject = Self.tokenHistoryChartID
             submenu.addItem(chartItem)
             return true
         }
 
-        let chartView = CostHistoryChartMenuView(
+        let chartView = TokenHistoryChartMenuView(
             provider: provider,
             daily: tokenSnapshot.daily,
-            totalCostUSD: tokenSnapshot.last30DaysCostUSD,
+            totalTokens: tokenSnapshot.last30DaysTokens,
             width: width)
         let hosting = MenuHostingView(rootView: chartView)
         let controller = NSHostingController(rootView: chartView)
@@ -144,7 +144,7 @@ extension StatusItemController {
         let chartItem = NSMenuItem()
         chartItem.view = hosting
         chartItem.isEnabled = false
-        chartItem.representedObject = Self.costHistoryChartID
+        chartItem.representedObject = Self.tokenHistoryChartID
         submenu.addItem(chartItem)
         return true
     }

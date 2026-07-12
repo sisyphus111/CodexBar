@@ -41,9 +41,9 @@ struct AbacusDescriptorTests {
     }
 
     @Test
-    func `descriptor does not support token cost`() {
+    func `descriptor does not support token usage`() {
         let descriptor = AbacusProviderDescriptor.descriptor
-        #expect(descriptor.tokenCost.supportsTokenCost == false)
+        #expect(descriptor.tokenUsage.supportsTokenUsage == false)
     }
 
     @Test

@@ -29,9 +29,9 @@ public enum FactoryProviderDescriptor {
                 iconStyle: .factory,
                 iconResourceName: "ProviderIcon-factory",
                 color: ProviderColor(red: 255 / 255, green: 107 / 255, blue: 53 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: false,
-                noDataMessage: { "Droid cost summary is not supported." }),
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: false,
+                noDataMessage: { "Droid token history is not supported." }),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .cli],
                 pipeline: ProviderFetchPipeline(resolveStrategies: { _ in [FactoryStatusFetchStrategy()] })),

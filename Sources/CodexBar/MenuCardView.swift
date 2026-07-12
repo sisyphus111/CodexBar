@@ -575,7 +575,7 @@ private struct CreditsBarContent: View {
     }
 }
 
-struct UsageMenuCardCostSectionView: View {
+struct UsageMenuCardTokenUsageSectionView: View {
     let model: UsageMenuCardView.Model
     let topPadding: CGFloat
     let bottomPadding: CGFloat
@@ -583,13 +583,13 @@ struct UsageMenuCardCostSectionView: View {
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
     var body: some View {
-        let hasTokenCost = self.model.tokenUsage != nil
+        let hasTokenUsage = self.model.tokenUsage != nil
         return Group {
-            if hasTokenCost {
+            if hasTokenUsage {
                 VStack(alignment: .leading, spacing: 10) {
                     if let tokenUsage = self.model.tokenUsage {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Cost")
+                            Text("Token usage")
                                 .font(.body)
                                 .fontWeight(.medium)
                             Text(tokenUsage.sessionLine)
@@ -658,14 +658,14 @@ extension UsageMenuCardView.Model {
         let creditsError: String?
         let dashboard: OpenAIDashboardSnapshot?
         let dashboardError: String?
-        let tokenSnapshot: CostUsageTokenSnapshot?
+        let tokenSnapshot: TokenUsageTokenSnapshot?
         let tokenError: String?
         let account: AccountInfo
         let isRefreshing: Bool
         let lastError: String?
         let usageBarsShowUsed: Bool
         let resetTimeDisplayStyle: ResetTimeDisplayStyle
-        let tokenCostUsageEnabled: Bool
+        let tokenUsageEnabled: Bool
         let showOptionalCreditsAndExtraUsage: Bool
         let sourceLabel: String?
         let kiloAutoMode: Bool
@@ -682,14 +682,14 @@ extension UsageMenuCardView.Model {
             creditsError: String?,
             dashboard: OpenAIDashboardSnapshot?,
             dashboardError: String?,
-            tokenSnapshot: CostUsageTokenSnapshot?,
+            tokenSnapshot: TokenUsageTokenSnapshot?,
             tokenError: String?,
             account: AccountInfo,
             isRefreshing: Bool,
             lastError: String?,
             usageBarsShowUsed: Bool,
             resetTimeDisplayStyle: ResetTimeDisplayStyle,
-            tokenCostUsageEnabled: Bool,
+            tokenUsageEnabled: Bool,
             showOptionalCreditsAndExtraUsage: Bool,
             sourceLabel: String? = nil,
             kiloAutoMode: Bool = false,
@@ -712,7 +712,7 @@ extension UsageMenuCardView.Model {
             self.lastError = lastError
             self.usageBarsShowUsed = usageBarsShowUsed
             self.resetTimeDisplayStyle = resetTimeDisplayStyle
-            self.tokenCostUsageEnabled = tokenCostUsageEnabled
+            self.tokenUsageEnabled = tokenUsageEnabled
             self.showOptionalCreditsAndExtraUsage = showOptionalCreditsAndExtraUsage
             self.sourceLabel = sourceLabel
             self.kiloAutoMode = kiloAutoMode
@@ -744,7 +744,7 @@ extension UsageMenuCardView.Model {
         }
         let tokenUsage = Self.tokenUsageSection(
             provider: input.provider,
-            enabled: input.tokenCostUsageEnabled,
+            enabled: input.tokenUsageEnabled,
             snapshot: input.tokenSnapshot,
             error: input.tokenError)
         let subtitle = Self.subtitle(
@@ -1443,32 +1443,20 @@ extension UsageMenuCardView.Model {
     private static func tokenUsageSection(
         provider: UsageProvider,
         enabled: Bool,
-        snapshot: CostUsageTokenSnapshot?,
+        snapshot: TokenUsageTokenSnapshot?,
         error: String?) -> TokenUsageSection?
     {
         guard provider == .codex || provider == .claude || provider == .vertexai else { return nil }
         guard enabled else { return nil }
         guard let snapshot else { return nil }
 
-        let sessionCost = snapshot.sessionCostUSD.map { UsageFormatter.usdString($0) } ?? "—"
         let sessionTokens = snapshot.sessionTokens.map { UsageFormatter.tokenCountString($0) }
-        let sessionLine: String = {
-            if let sessionTokens {
-                return "Today: \(sessionCost) · \(sessionTokens) tokens"
-            }
-            return "Today: \(sessionCost)"
-        }()
+        let sessionLine = sessionTokens.map { "Today: \($0) tokens" } ?? "Today: —"
 
-        let monthCost = snapshot.last30DaysCostUSD.map { UsageFormatter.usdString($0) } ?? "—"
         let fallbackTokens = snapshot.daily.compactMap(\.totalTokens).reduce(0, +)
         let monthTokensValue = snapshot.last30DaysTokens ?? (fallbackTokens > 0 ? fallbackTokens : nil)
         let monthTokens = monthTokensValue.map { UsageFormatter.tokenCountString($0) }
-        let monthLine: String = {
-            if let monthTokens {
-                return "Last 30 days: \(monthCost) · \(monthTokens) tokens"
-            }
-            return "Last 30 days: \(monthCost)"
-        }()
+        let monthLine = monthTokens.map { "Last 30 days: \($0) tokens" } ?? "Last 30 days: —"
         let err = (error?.isEmpty ?? true) ? nil : error
         return TokenUsageSection(
             sessionLine: sessionLine,

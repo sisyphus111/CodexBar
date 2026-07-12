@@ -28,9 +28,9 @@ public enum AmpProviderDescriptor {
                 iconStyle: .amp,
                 iconResourceName: "ProviderIcon-amp",
                 color: ProviderColor(red: 220 / 255, green: 38 / 255, blue: 38 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: false,
-                noDataMessage: { "Amp cost summary is not supported." }),
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: false,
+                noDataMessage: { "Amp token history is not supported." }),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .web],
                 pipeline: ProviderFetchPipeline(resolveStrategies: { _ in [AmpStatusFetchStrategy()] })),

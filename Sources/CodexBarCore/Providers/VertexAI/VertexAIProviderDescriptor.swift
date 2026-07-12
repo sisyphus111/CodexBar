@@ -28,8 +28,8 @@ public enum VertexAIProviderDescriptor {
                 iconStyle: .vertexai,
                 iconResourceName: "ProviderIcon-vertexai",
                 color: ProviderColor(red: 66 / 255, green: 133 / 255, blue: 244 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: true,
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: true,
                 noDataMessage: { "No Vertex AI cost data found in Claude logs. Ensure entries include Vertex metadata."
                 }),
             fetchPlan: ProviderFetchPlan(
@@ -59,14 +59,14 @@ struct VertexAIOAuthFetchStrategy: ProviderFetchStrategy {
         }
 
         // Fetch quota usage from Cloud Monitoring. If no data is found (e.g., no recent
-        // Vertex AI requests), return an empty snapshot so token costs can still display.
+        // Vertex AI requests), return an empty snapshot so local token usage can still display.
         let usage: VertexAIUsageResponse?
         do {
             usage = try await VertexAIUsageFetcher.fetchUsage(
                 accessToken: credentials.accessToken,
                 projectId: credentials.projectId)
         } catch VertexAIFetchError.noData {
-            // No quota data is fine - token costs from local logs can still be shown.
+            // No quota data is fine - token usage from local logs can still be shown.
             usage = nil
         }
 
@@ -92,8 +92,8 @@ struct VertexAIOAuthFetchStrategy: ProviderFetchStrategy {
         _ response: VertexAIUsageResponse?,
         credentials: VertexAIOAuthCredentials) -> UsageSnapshot
     {
-        // Token cost is fetched separately via CostUsageScanner from local Claude logs.
-        // Quota usage from Cloud Monitoring is optional - we still show token costs if unavailable.
+        // Token usage is fetched separately via TokenUsageScanner from local Claude logs.
+        // Quota usage from Cloud Monitoring is optional - local token history still works without it.
 
         let identity = ProviderIdentitySnapshot(
             providerID: .vertexai,

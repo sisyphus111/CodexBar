@@ -29,8 +29,8 @@ public enum CodexProviderDescriptor {
                 iconStyle: .codex,
                 iconResourceName: "ProviderIcon-codex",
                 color: ProviderColor(red: 73 / 255, green: 163 / 255, blue: 176 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: true,
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: true,
                 noDataMessage: self.noDataMessage),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .web, .cli, .oauth],

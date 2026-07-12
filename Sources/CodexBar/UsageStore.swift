@@ -55,7 +55,7 @@ extension UsageStore {
             _ = self.settings.statusChecksEnabled
             _ = self.settings.sessionQuotaNotificationsEnabled
             _ = self.settings.usageBarsShowUsed
-            _ = self.settings.costUsageEnabled
+            _ = self.settings.tokenUsageEnabled
             _ = self.settings.randomBlinkEnabled
             _ = self.settings.configRevision
             for implementation in ProviderCatalog.all {
@@ -126,7 +126,7 @@ final class UsageStore {
     var lastSourceLabels: [UsageProvider: String] = [:]
     var lastFetchAttempts: [UsageProvider: [ProviderFetchAttempt]] = [:]
     var accountSnapshots: [UsageProvider: [TokenAccountUsageSnapshot]] = [:]
-    var tokenSnapshots: [UsageProvider: CostUsageTokenSnapshot] = [:]
+    var tokenSnapshots: [UsageProvider: TokenUsageTokenSnapshot] = [:]
     var tokenErrors: [UsageProvider: String] = [:]
     var tokenRefreshInFlight: Set<UsageProvider> = []
     var credits: CreditsSnapshot?
@@ -178,7 +178,7 @@ final class UsageStore {
 
     @ObservationIgnored let codexFetcher: UsageFetcher
     @ObservationIgnored let claudeFetcher: any ClaudeUsageFetching
-    @ObservationIgnored private let costUsageFetcher: CostUsageFetcher
+    @ObservationIgnored private let tokenUsageFetcher: TokenUsageFetcher
     @ObservationIgnored let browserDetection: BrowserDetection
     @ObservationIgnored private let registry: ProviderRegistry
     @ObservationIgnored let settings: SettingsStore
@@ -186,7 +186,7 @@ final class UsageStore {
     @ObservationIgnored private let sessionQuotaNotifier: any SessionQuotaNotifying
     @ObservationIgnored private let sessionQuotaLogger = CodexBarLog.logger(LogCategories.sessionQuota)
     @ObservationIgnored let openAIWebLogger = CodexBarLog.logger(LogCategories.openAIWeb)
-    @ObservationIgnored private let tokenCostLogger = CodexBarLog.logger(LogCategories.tokenCost)
+    @ObservationIgnored private let tokenUsageLogger = CodexBarLog.logger(LogCategories.tokenUsage)
     @ObservationIgnored let augmentLogger = CodexBarLog.logger(LogCategories.augment)
     @ObservationIgnored let providerLogger = CodexBarLog.logger(LogCategories.providers)
     @ObservationIgnored var openAIWebDebugLines: [String] = []
@@ -219,7 +219,7 @@ final class UsageStore {
         fetcher: UsageFetcher,
         browserDetection: BrowserDetection,
         claudeFetcher: (any ClaudeUsageFetching)? = nil,
-        costUsageFetcher: CostUsageFetcher = CostUsageFetcher(),
+        tokenUsageFetcher: TokenUsageFetcher = TokenUsageFetcher(),
         settings: SettingsStore,
         registry: ProviderRegistry = .shared,
         historicalUsageHistoryStore: HistoricalUsageHistoryStore = HistoricalUsageHistoryStore(),
@@ -231,7 +231,7 @@ final class UsageStore {
         self.codexFetcher = fetcher
         self.browserDetection = browserDetection
         self.claudeFetcher = claudeFetcher ?? ClaudeUsageFetcher(browserDetection: browserDetection)
-        self.costUsageFetcher = costUsageFetcher
+        self.tokenUsageFetcher = tokenUsageFetcher
         self.settings = settings
         self.registry = registry
         self.environmentBase = environmentBase
@@ -491,7 +491,7 @@ final class UsageStore {
                 group.addTask { await self.refreshCreditsIfNeeded(minimumSnapshotUpdatedAt: refreshStartedAt) }
             }
 
-            // Token-cost usage can be slow; run it outside the refresh group so we don't block menu updates.
+            // Token-token usage can be slow; run it outside the refresh group so we don't block menu updates.
             self.scheduleTokenRefresh(force: forceTokenUsage)
 
             // OpenAI web scrape depends on the current Codex account email (which can change after login/account
@@ -1149,11 +1149,11 @@ extension UsageStore {
         }
     }
 
-    func clearCostUsageCache() async -> String? {
+    func clearTokenUsageCache() async -> String? {
         let errorMessage: String? = await Task.detached(priority: .utility) {
             let fm = FileManager.default
             let cacheDirs = [
-                Self.costUsageCacheDirectory(fileManager: fm),
+                Self.tokenUsageCacheDirectory(fileManager: fm),
             ]
 
             for cacheDir in cacheDirs {
@@ -1186,7 +1186,7 @@ extension UsageStore {
             return
         }
 
-        guard self.settings.costUsageEnabled else {
+        guard self.settings.tokenUsageEnabled else {
             self.tokenSnapshots.removeValue(forKey: provider)
             self.tokenErrors[provider] = nil
             self.tokenFailureGates[provider]?.reset()
@@ -1217,18 +1217,18 @@ extension UsageStore {
 
         let startedAt = Date()
         let providerText = provider.rawValue
-        self.tokenCostLogger
-            .debug("cost usage start provider=\(providerText) force=\(force)")
+        self.tokenUsageLogger
+            .debug("token usage start provider=\(providerText) force=\(force)")
 
         do {
-            let fetcher = self.costUsageFetcher
+            let fetcher = self.tokenUsageFetcher
             let timeoutSeconds = self.tokenFetchTimeout
-            // CostUsageFetcher scans local Codex session logs from this machine. That data is
+            // TokenUsageFetcher scans local Codex session logs from this machine. That data is
             // intentionally presented as provider-level local telemetry rather than managed-account
             // remote state, so managed Codex account selection does not retarget this fetch.
             // If the UI later needs account-scoped token history, it should label and source that
             // separately instead of silently changing the meaning of this section.
-            let snapshot = try await withThrowingTaskGroup(of: CostUsageTokenSnapshot.self) { group in
+            let snapshot = try await withThrowingTaskGroup(of: TokenUsageTokenSnapshot.self) { group in
                 group.addTask(priority: .utility) {
                     try await fetcher.loadTokenSnapshot(
                         provider: provider,
@@ -1238,7 +1238,7 @@ extension UsageStore {
                 }
                 group.addTask {
                     try await Task.sleep(nanoseconds: UInt64(timeoutSeconds * 1_000_000_000))
-                    throw CostUsageError.timedOut(seconds: Int(timeoutSeconds))
+                    throw TokenUsageError.timedOut(seconds: Int(timeoutSeconds))
                 }
                 defer { group.cancelAll() }
                 guard let snapshot = try await group.next() else { throw CancellationError() }
@@ -1247,20 +1247,18 @@ extension UsageStore {
 
             guard !snapshot.daily.isEmpty else {
                 self.tokenSnapshots.removeValue(forKey: provider)
-                self.tokenErrors[provider] = Self.tokenCostNoDataMessage(for: provider)
+                self.tokenErrors[provider] = Self.tokenUsageNoDataMessage(for: provider)
                 self.tokenFailureGates[provider]?.recordSuccess()
                 return
             }
             let duration = Date().timeIntervalSince(startedAt)
-            let sessionCost = snapshot.sessionCostUSD.map(UsageFormatter.usdString) ?? "—"
-            let monthCost = snapshot.last30DaysCostUSD.map(UsageFormatter.usdString) ?? "—"
             let durationText = String(format: "%.2f", duration)
             let message =
-                "cost usage success provider=\(providerText) " +
+                "token usage success provider=\(providerText) " +
                 "duration=\(durationText)s " +
-                "today=\(sessionCost) " +
-                "30d=\(monthCost)"
-            self.tokenCostLogger.info(message)
+                "today=\(snapshot.sessionTokens ?? 0) " +
+                "30d=\(snapshot.last30DaysTokens ?? 0)"
+            self.tokenUsageLogger.info(message)
             self.tokenSnapshots[provider] = snapshot
             self.tokenErrors[provider] = nil
             self.tokenFailureGates[provider]?.recordSuccess()
@@ -1270,8 +1268,8 @@ extension UsageStore {
             let duration = Date().timeIntervalSince(startedAt)
             let msg = error.localizedDescription
             let durationText = String(format: "%.2f", duration)
-            let message = "cost usage failed provider=\(providerText) duration=\(durationText)s error=\(msg)"
-            self.tokenCostLogger.error(message)
+            let message = "token usage failed provider=\(providerText) duration=\(durationText)s error=\(msg)"
+            self.tokenUsageLogger.error(message)
             let hadPriorData = self.tokenSnapshots[provider] != nil
             let shouldSurface = self.tokenFailureGates[provider]?
                 .shouldSurfaceError(onFailureWithPriorData: hadPriorData) ?? true

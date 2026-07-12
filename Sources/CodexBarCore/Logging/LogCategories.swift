@@ -59,7 +59,7 @@ public enum LogCategories {
     public static let syntheticUsage = "synthetic-usage"
     public static let terminal = "terminal"
     public static let tokenAccounts = "token-accounts"
-    public static let tokenCost = "token-cost"
+    public static let tokenUsage = "token-usage"
     public static let ttyRunner = "tty-runner"
     public static let vertexAIFetcher = "vertexai-fetcher"
     public static let warpUsage = "warp-usage"

@@ -60,7 +60,7 @@ extension UsageStore {
         self.snapshots[provider] = snapshot?.scoped(to: provider)
     }
 
-    func _setTokenSnapshotForTesting(_ snapshot: CostUsageTokenSnapshot?, provider: UsageProvider) {
+    func _setTokenSnapshotForTesting(_ snapshot: TokenUsageTokenSnapshot?, provider: UsageProvider) {
         self.tokenSnapshots[provider] = snapshot
     }
 

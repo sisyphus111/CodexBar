@@ -11,8 +11,8 @@ struct DebugPane: View {
     @State private var currentFetchProvider: UsageProvider = .codex
     @State private var isLoadingLog = false
     @State private var logText: String = ""
-    @State private var isClearingCostCache = false
-    @State private var costCacheStatus: String?
+    @State private var isClearingTokenUsageCache = false
+    @State private var tokenUsageCacheStatus: String?
     #if DEBUG
     @State private var currentErrorProvider: UsageProvider = .codex
     @State private var simulatedErrorText: String = """
@@ -190,20 +190,20 @@ struct DebugPane: View {
 
                 SettingsSection(
                     title: "Caches",
-                    caption: "Clear cached cost scan results.")
+                    caption: "Clear cached token scan results.")
                 {
                     let isTokenRefreshActive = self.store.isTokenRefreshInFlight(for: .codex)
                         || self.store.isTokenRefreshInFlight(for: .claude)
 
                     HStack(spacing: 12) {
                         Button {
-                            Task { await self.clearCostCache() }
+                            Task { await self.clearTokenUsageCache() }
                         } label: {
-                            Label("Clear cost cache", systemImage: "trash")
+                            Label("Clear token cache", systemImage: "trash")
                         }
-                        .disabled(self.isClearingCostCache || isTokenRefreshActive)
+                        .disabled(self.isClearingTokenUsageCache || isTokenRefreshActive)
 
-                        if let status = self.costCacheStatus {
+                        if let status = self.tokenUsageCacheStatus {
                             Text(status)
                                 .font(.footnote)
                                 .foregroundStyle(.tertiary)
@@ -303,7 +303,7 @@ struct DebugPane: View {
                                 self.simulatedErrorText,
                                 provider: self.currentErrorProvider)
                         } label: {
-                            Label("Set cost error", systemImage: "banknote")
+                            Label("Set token error", systemImage: "number")
                         }
                         .controlSize(.small)
                         .disabled(!supportsTokenError)
@@ -311,7 +311,7 @@ struct DebugPane: View {
                         Button {
                             self.store._setTokenErrorForTesting(nil, provider: self.currentErrorProvider)
                         } label: {
-                            Label("Clear cost error", systemImage: "xmark.circle")
+                            Label("Clear token error", systemImage: "xmark.circle")
                         }
                         .controlSize(.small)
                         .disabled(!supportsTokenError)
@@ -463,18 +463,18 @@ struct DebugPane: View {
         SessionQuotaNotifier().post(transition: transition, provider: provider, badge: 1)
     }
 
-    private func clearCostCache() async {
-        guard !self.isClearingCostCache else { return }
-        self.isClearingCostCache = true
-        self.costCacheStatus = nil
-        defer { self.isClearingCostCache = false }
+    private func clearTokenUsageCache() async {
+        guard !self.isClearingTokenUsageCache else { return }
+        self.isClearingTokenUsageCache = true
+        self.tokenUsageCacheStatus = nil
+        defer { self.isClearingTokenUsageCache = false }
 
-        if let error = await self.store.clearCostUsageCache() {
-            self.costCacheStatus = "Failed: \(error)"
+        if let error = await self.store.clearTokenUsageCache() {
+            self.tokenUsageCacheStatus = "Failed: \(error)"
             return
         }
 
-        self.costCacheStatus = "Cleared."
+        self.tokenUsageCacheStatus = "Cleared."
     }
 
     private func fetchAttemptsText(for provider: UsageProvider) -> String {

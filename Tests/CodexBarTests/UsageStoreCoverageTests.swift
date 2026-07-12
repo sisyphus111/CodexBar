@@ -284,11 +284,9 @@ struct UsageStoreCoverageTests {
             TokenAccountUsageSnapshot(account: account, snapshot: cachedSnapshot, error: nil, sourceLabel: "api"),
         ]
         store._setTokenSnapshotForTesting(
-            CostUsageTokenSnapshot(
+            TokenUsageTokenSnapshot(
                 sessionTokens: 10,
-                sessionCostUSD: 1.23,
                 last30DaysTokens: 100,
-                last30DaysCostUSD: 4.56,
                 daily: [],
                 updatedAt: Date()),
             provider: .synthetic)

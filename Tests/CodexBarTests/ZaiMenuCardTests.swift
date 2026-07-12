@@ -58,7 +58,7 @@ struct ZaiMenuCardTests {
             lastError: nil,
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: false,
             now: now))

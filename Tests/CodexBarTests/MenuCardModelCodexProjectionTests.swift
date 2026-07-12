@@ -69,7 +69,7 @@ struct MenuCardModelCodexProjectionTests {
             lastError: nil,
             usageBarsShowUsed: true,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: false,
             now: now))
@@ -136,7 +136,7 @@ struct MenuCardModelCodexProjectionTests {
             lastError: nil,
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: false,
             now: now))
@@ -194,7 +194,7 @@ struct MenuCardModelCodexProjectionTests {
             lastError: nil,
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: false,
             now: now))
@@ -249,7 +249,7 @@ struct MenuCardModelCodexProjectionTests {
             lastError: nil,
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: false,
             hidePersonalInfo: false,
             now: now))

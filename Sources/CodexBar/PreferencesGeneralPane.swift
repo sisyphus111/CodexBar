@@ -31,24 +31,24 @@ struct GeneralPane: View {
 
                     VStack(alignment: .leading, spacing: 10) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Toggle(isOn: self.$settings.costUsageEnabled) {
-                                Text("Show cost summary")
+                            Toggle(isOn: self.$settings.tokenUsageEnabled) {
+                                Text("Show token history")
                                     .font(.body)
                             }
                             .toggleStyle(.checkbox)
 
-                            Text("Reads local usage logs. Shows today + last 30 days cost in the menu.")
+                            Text("Reads local usage logs. Shows today and the last 30 days of token usage.")
                                 .font(.footnote)
                                 .foregroundStyle(.tertiary)
                                 .fixedSize(horizontal: false, vertical: true)
 
-                            if self.settings.costUsageEnabled {
+                            if self.settings.tokenUsageEnabled {
                                 Text("Auto-refresh: hourly · Timeout: 10m")
                                     .font(.footnote)
                                     .foregroundStyle(.tertiary)
 
-                                self.costStatusLine(provider: .claude)
-                                self.costStatusLine(provider: .codex)
+                                self.tokenStatusLine(provider: .claude)
+                                self.tokenStatusLine(provider: .codex)
                             }
                         }
                     }
@@ -115,7 +115,7 @@ struct GeneralPane: View {
         }
     }
 
-    private func costStatusLine(provider: UsageProvider) -> some View {
+    private func tokenStatusLine(provider: UsageProvider) -> some View {
         let name = ProviderDescriptorRegistry.descriptor(for: provider).metadata.displayName
 
         guard provider == .claude || provider == .codex else {
@@ -139,8 +139,8 @@ struct GeneralPane: View {
         }
         if let snapshot = self.store.tokenSnapshot(for: provider) {
             let updated = UsageFormatter.updatedString(from: snapshot.updatedAt)
-            let cost = snapshot.last30DaysCostUSD.map { UsageFormatter.usdString($0) } ?? "—"
-            return Text("\(name): \(updated) · 30d \(cost)")
+            let tokens = snapshot.last30DaysTokens.map(UsageFormatter.tokenCountString) ?? "—"
+            return Text("\(name): \(updated) · 30d \(tokens) tokens")
                 .font(.footnote)
                 .foregroundStyle(.tertiary)
         }

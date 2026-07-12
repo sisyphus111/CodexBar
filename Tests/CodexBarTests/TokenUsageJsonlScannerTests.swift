@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import CodexBarCore
 
-struct CostUsageJsonlScannerTests {
+struct TokenUsageJsonlScannerTests {
     @Test
     func `jsonl scanner handles lines across read chunks`() throws {
         let root = try self.makeTemporaryRoot()
@@ -14,7 +14,7 @@ struct CostUsageJsonlScannerTests {
         try contents.write(to: fileURL, atomically: true, encoding: .utf8)
 
         var scanned: [(count: Int, truncated: Bool)] = []
-        let endOffset = try CostUsageJsonl.scan(
+        let endOffset = try TokenUsageJsonl.scan(
             fileURL: fileURL,
             maxLineBytes: 400_000,
             prefixBytes: 400_000)
@@ -41,8 +41,8 @@ struct CostUsageJsonlScannerTests {
         let contents = "\(shortLine)\n\(longLine)\n"
         try contents.write(to: fileURL, atomically: true, encoding: .utf8)
 
-        var scanned: [CostUsageJsonl.Line] = []
-        _ = try CostUsageJsonl.scan(
+        var scanned: [TokenUsageJsonl.Line] = []
+        _ = try TokenUsageJsonl.scan(
             fileURL: fileURL,
             maxLineBytes: 10000,
             prefixBytes: 64)
@@ -59,7 +59,7 @@ struct CostUsageJsonlScannerTests {
 
     private func makeTemporaryRoot() throws -> URL {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(
-            "codexbar-cost-usage-jsonl-\(UUID().uuidString)",
+            "codexbar-token-usage-jsonl-\(UUID().uuidString)",
             isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         return root

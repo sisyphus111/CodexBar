@@ -29,9 +29,9 @@ public enum MistralProviderDescriptor {
                 iconStyle: .mistral,
                 iconResourceName: "ProviderIcon-mistral",
                 color: ProviderColor(red: 255 / 255, green: 80 / 255, blue: 15 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: false,
-                noDataMessage: { "Mistral cost summary is not yet supported." }),
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: false,
+                noDataMessage: { "Mistral token history is not yet supported." }),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .web],
                 pipeline: ProviderFetchPipeline(resolveStrategies: { _ in [MistralWebFetchStrategy()] })),

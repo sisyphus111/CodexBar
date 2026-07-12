@@ -66,7 +66,7 @@ struct MenuCardModelTests {
             lastError: nil,
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: false,
             now: now))
@@ -115,7 +115,7 @@ struct MenuCardModelTests {
             lastError: nil,
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: false,
             now: now))
@@ -185,7 +185,7 @@ struct MenuCardModelTests {
             lastError: nil,
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: false,
             now: now))
@@ -211,7 +211,7 @@ struct MenuCardModelTests {
             lastError: "Probe failed for Codex",
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: false,
             now: Date()))
@@ -222,7 +222,7 @@ struct MenuCardModelTests {
     }
 
     @Test
-    func `cost section includes last30 days tokens`() throws {
+    func `token usage section includes last30 days tokens`() throws {
         let now = Date()
         let metadata = try #require(ProviderDefaults.metadata[.codex])
         let snapshot = UsageSnapshot(
@@ -230,11 +230,9 @@ struct MenuCardModelTests {
             secondary: nil,
             tertiary: nil,
             updatedAt: now)
-        let tokenSnapshot = CostUsageTokenSnapshot(
+        let tokenSnapshot = TokenUsageTokenSnapshot(
             sessionTokens: 123,
-            sessionCostUSD: 1.23,
             last30DaysTokens: 456,
-            last30DaysCostUSD: 78.9,
             daily: [],
             updatedAt: now)
         let model = UsageMenuCardView.Model.make(.init(
@@ -252,7 +250,7 @@ struct MenuCardModelTests {
             lastError: nil,
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: true,
+            tokenUsageEnabled: true,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: false,
             now: now))
@@ -279,7 +277,7 @@ struct MenuCardModelTests {
             lastError: nil,
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: false,
             now: Date()))
@@ -320,7 +318,7 @@ struct MenuCardModelTests {
             lastError: nil,
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: false,
             hidePersonalInfo: false,
             now: now))
@@ -358,7 +356,7 @@ struct MenuCardModelTests {
             lastError: nil,
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: false,
             now: now))
@@ -405,7 +403,7 @@ struct MenuCardModelTests {
             lastError: nil,
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: false,
             now: now))
@@ -446,7 +444,7 @@ struct MenuCardModelTests {
             lastError: nil,
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: false,
             now: now))
@@ -486,7 +484,7 @@ struct MenuCardModelTests {
             lastError: "OpenAI dashboard signed in as codex@example.com.",
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: true,
             now: now))
@@ -531,7 +529,7 @@ struct MenuCardModelTests {
             lastError: nil,
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             sourceLabel: "cli",
             kiloAutoMode: true,
@@ -573,7 +571,7 @@ struct MenuCardModelTests {
             lastError: nil,
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: false,
             now: now))
@@ -616,7 +614,7 @@ struct MenuCardModelTests {
             lastError: nil,
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             sourceLabel: "api",
             kiloAutoMode: true,
@@ -638,7 +636,7 @@ struct MenuCardModelTests {
             lastError: nil,
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             sourceLabel: "cli",
             kiloAutoMode: false,
@@ -683,7 +681,7 @@ struct MenuCardModelTests {
             lastError: nil,
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: false,
             now: now))
@@ -721,7 +719,7 @@ struct MenuCardModelTests {
             lastError: nil,
             usageBarsShowUsed: false,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: false,
             now: now))
@@ -767,7 +765,7 @@ struct MenuCardModelTests {
             lastError: nil,
             usageBarsShowUsed: true,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: false,
             now: now))
@@ -813,7 +811,7 @@ struct MenuCardModelTests {
             lastError: nil,
             usageBarsShowUsed: true,
             resetTimeDisplayStyle: .countdown,
-            tokenCostUsageEnabled: false,
+            tokenUsageEnabled: false,
             showOptionalCreditsAndExtraUsage: true,
             hidePersonalInfo: false,
             now: now))

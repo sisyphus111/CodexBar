@@ -2,10 +2,10 @@ import Foundation
 import Testing
 @testable import CodexBarCore
 
-struct CostUsageScannerTests {
+struct TokenUsageScannerTests {
     @Test
     func `vertex daily report filters claude logs`() throws {
-        let env = try CostUsageTestEnvironment()
+        let env = try TokenUsageTestEnvironment()
         defer { env.cleanup() }
 
         let day = try env.makeLocalNoon(year: 2025, month: 12, day: 20)
@@ -50,13 +50,13 @@ struct CostUsageScannerTests {
             relativePath: "project-a/session-a.jsonl",
             contents: env.jsonl([vertexEntry, claudeEntry]))
 
-        var options = CostUsageScanner.Options(
+        var options = TokenUsageScanner.Options(
             codexSessionsRoot: nil,
             claudeProjectsRoots: [env.claudeProjectsRoot],
             cacheRoot: env.cacheRoot)
         options.refreshMinIntervalSeconds = 0
 
-        let report = CostUsageScanner.loadDailyReport(
+        let report = TokenUsageScanner.loadDailyReport(
             provider: .vertexai,
             since: day,
             until: day,
@@ -71,7 +71,7 @@ struct CostUsageScannerTests {
 
     @Test
     func `vertex daily report detects by vrtx id prefix`() throws {
-        let env = try CostUsageTestEnvironment()
+        let env = try TokenUsageTestEnvironment()
         defer { env.cleanup() }
 
         let day = try env.makeLocalNoon(year: 2025, month: 12, day: 20)
@@ -115,14 +115,14 @@ struct CostUsageScannerTests {
             relativePath: "project-a/session-a.jsonl",
             contents: env.jsonl([vertexEntry, claudeEntry]))
 
-        var options = CostUsageScanner.Options(
+        var options = TokenUsageScanner.Options(
             codexSessionsRoot: nil,
             claudeProjectsRoots: [env.claudeProjectsRoot],
             cacheRoot: env.cacheRoot)
         options.refreshMinIntervalSeconds = 0
 
         // Vertex AI report should only include entries with _vrtx_ prefix
-        let vertexReport = CostUsageScanner.loadDailyReport(
+        let vertexReport = TokenUsageScanner.loadDailyReport(
             provider: .vertexai,
             since: day,
             until: day,
@@ -137,7 +137,7 @@ struct CostUsageScannerTests {
         // Claude report with excludeVertexAI should only include non-vrtx entries
         var claudeOptions = options
         claudeOptions.claudeLogProviderFilter = .excludeVertexAI
-        let claudeReport = CostUsageScanner.loadDailyReport(
+        let claudeReport = TokenUsageScanner.loadDailyReport(
             provider: .claude,
             since: day,
             until: day,
@@ -152,7 +152,7 @@ struct CostUsageScannerTests {
 
     @Test
     func `claude parses large lines with usage at tail`() throws {
-        let env = try CostUsageTestEnvironment()
+        let env = try TokenUsageTestEnvironment()
         defer { env.cleanup() }
 
         let day = try env.makeLocalNoon(year: 2025, month: 12, day: 28)
@@ -177,13 +177,13 @@ struct CostUsageScannerTests {
             relativePath: "project-a/large-line.jsonl",
             contents: env.jsonl([assistant]))
 
-        var options = CostUsageScanner.Options(
+        var options = TokenUsageScanner.Options(
             codexSessionsRoot: nil,
             claudeProjectsRoots: [env.claudeProjectsRoot],
             cacheRoot: env.cacheRoot)
         options.refreshMinIntervalSeconds = 0
 
-        let report = CostUsageScanner.loadDailyReport(
+        let report = TokenUsageScanner.loadDailyReport(
             provider: .claude,
             since: day,
             until: day,
@@ -197,7 +197,7 @@ struct CostUsageScannerTests {
 
     @Test
     func `claude daily report refreshes when file changes`() throws {
-        let env = try CostUsageTestEnvironment()
+        let env = try TokenUsageTestEnvironment()
         defer { env.cleanup() }
 
         let day = try env.makeLocalNoon(year: 2025, month: 12, day: 20)
@@ -222,13 +222,13 @@ struct CostUsageScannerTests {
             relativePath: "project-a/session-a.jsonl",
             contents: env.jsonl([first]))
 
-        var options = CostUsageScanner.Options(
+        var options = TokenUsageScanner.Options(
             codexSessionsRoot: nil,
             claudeProjectsRoots: [env.claudeProjectsRoot],
             cacheRoot: env.cacheRoot)
         options.refreshMinIntervalSeconds = 0
 
-        let firstReport = CostUsageScanner.loadDailyReport(
+        let firstReport = TokenUsageScanner.loadDailyReport(
             provider: .claude,
             since: day,
             until: day,
@@ -251,7 +251,7 @@ struct CostUsageScannerTests {
         ]
         try env.jsonl([first, second]).write(to: fileURL, atomically: true, encoding: .utf8)
 
-        let secondReport = CostUsageScanner.loadDailyReport(
+        let secondReport = TokenUsageScanner.loadDailyReport(
             provider: .claude,
             since: day,
             until: day,
@@ -262,7 +262,7 @@ struct CostUsageScannerTests {
 
     @Test
     func `codex incremental parsing uses previous totals`() throws {
-        let env = try CostUsageTestEnvironment()
+        let env = try TokenUsageTestEnvironment()
         defer { env.cleanup() }
 
         let day = try env.makeLocalNoon(year: 2025, month: 12, day: 20)
@@ -271,7 +271,7 @@ struct CostUsageScannerTests {
         let iso2 = env.isoString(for: day.addingTimeInterval(2))
 
         let model = "openai/gpt-5.2-codex"
-        let normalized = CostUsagePricing.normalizeCodexModel(model)
+        let normalized = TokenUsageModelNormalizer.codex(model)
         #expect(normalized == "gpt-5.2-codex")
         let turnContext: [String: Any] = [
             "type": "turn_context",
@@ -301,8 +301,8 @@ struct CostUsageScannerTests {
             filename: "session.jsonl",
             contents: env.jsonl([turnContext, firstTokenCount]))
 
-        let range = CostUsageScanner.CostUsageDayRange(since: day, until: day)
-        let first = CostUsageScanner.parseCodexFile(fileURL: fileURL, range: range)
+        let range = TokenUsageScanner.TokenUsageDayRange(since: day, until: day)
+        let first = TokenUsageScanner.parseCodexFile(fileURL: fileURL, range: range)
         #expect(first.parsedBytes > 0)
         #expect(first.lastTotals?.input == 100)
         #expect(first.lastTotals?.cached == 20)
@@ -326,13 +326,13 @@ struct CostUsageScannerTests {
         try env.jsonl([turnContext, firstTokenCount, secondTokenCount])
             .write(to: fileURL, atomically: true, encoding: .utf8)
 
-        let delta = CostUsageScanner.parseCodexFile(
+        let delta = TokenUsageScanner.parseCodexFile(
             fileURL: fileURL,
             range: range,
             startOffset: first.parsedBytes,
             initialModel: first.lastModel,
             initialTotals: first.lastTotals)
-        let dayKey = CostUsageScanner.CostUsageDayRange.dayKey(from: day)
+        let dayKey = TokenUsageScanner.TokenUsageDayRange.dayKey(from: day)
         let packed = delta.days[dayKey]?[normalized] ?? []
         #expect(packed.count >= 3)
         #expect(packed[0] == 60)
@@ -342,7 +342,7 @@ struct CostUsageScannerTests {
 
     @Test
     func `claude incremental parsing reads appended lines only`() throws {
-        let env = try CostUsageTestEnvironment()
+        let env = try TokenUsageTestEnvironment()
         defer { env.cleanup() }
 
         let day = try env.makeLocalNoon(year: 2025, month: 12, day: 20)
@@ -350,7 +350,7 @@ struct CostUsageScannerTests {
         let iso1 = env.isoString(for: day.addingTimeInterval(1))
 
         let model = "claude-sonnet-4-20250514"
-        let normalized = CostUsagePricing.normalizeClaudeModel(model)
+        let normalized = TokenUsageModelNormalizer.claude(model)
         let first: [String: Any] = [
             "type": "assistant",
             "timestamp": iso0,
@@ -368,8 +368,8 @@ struct CostUsageScannerTests {
             relativePath: "project-a/session-a.jsonl",
             contents: env.jsonl([first]))
 
-        let range = CostUsageScanner.CostUsageDayRange(since: day, until: day)
-        let firstParse = CostUsageScanner.parseClaudeFile(
+        let range = TokenUsageScanner.TokenUsageDayRange(since: day, until: day)
+        let firstParse = TokenUsageScanner.parseClaudeFile(
             fileURL: fileURL,
             range: range,
             providerFilter: .all)
@@ -390,12 +390,12 @@ struct CostUsageScannerTests {
         ]
         try env.jsonl([first, second]).write(to: fileURL, atomically: true, encoding: .utf8)
 
-        let delta = CostUsageScanner.parseClaudeFile(
+        let delta = TokenUsageScanner.parseClaudeFile(
             fileURL: fileURL,
             range: range,
             providerFilter: .all,
             startOffset: firstParse.parsedBytes)
-        let dayKey = CostUsageScanner.CostUsageDayRange.dayKey(from: day)
+        let dayKey = TokenUsageScanner.TokenUsageDayRange.dayKey(from: day)
         let packed = delta.days[dayKey]?[normalized] ?? []
         #expect(packed.count >= 4)
         #expect(packed[0] == 40)
@@ -412,15 +412,15 @@ struct CostUsageScannerTests {
         ]
 
         for ts in timestamps {
-            let expected = CostUsageScanner.dayKeyFromParsedISO(ts)
-            let fast = CostUsageScanner.dayKeyFromTimestamp(ts)
+            let expected = TokenUsageScanner.dayKeyFromParsedISO(ts)
+            let fast = TokenUsageScanner.dayKeyFromTimestamp(ts)
             #expect(fast == expected)
         }
     }
 
     @Test
     func `claude deduplicates streaming chunks`() throws {
-        let env = try CostUsageTestEnvironment()
+        let env = try TokenUsageTestEnvironment()
         defer { env.cleanup() }
 
         let day = try env.makeLocalNoon(year: 2025, month: 12, day: 20)
@@ -484,13 +484,13 @@ struct CostUsageScannerTests {
             relativePath: "project-a/session-a.jsonl",
             contents: env.jsonl([chunk1, chunk2, chunk3]))
 
-        var options = CostUsageScanner.Options(
+        var options = TokenUsageScanner.Options(
             codexSessionsRoot: nil,
             claudeProjectsRoots: [env.claudeProjectsRoot],
             cacheRoot: env.cacheRoot)
         options.refreshMinIntervalSeconds = 0
 
-        let report = CostUsageScanner.loadDailyReport(
+        let report = TokenUsageScanner.loadDailyReport(
             provider: .claude,
             since: day,
             until: day,
@@ -508,7 +508,7 @@ struct CostUsageScannerTests {
 
     @Test
     func `claude counts entries without ids as separate`() throws {
-        let env = try CostUsageTestEnvironment()
+        let env = try TokenUsageTestEnvironment()
         defer { env.cleanup() }
 
         let day = try env.makeLocalNoon(year: 2025, month: 12, day: 20)
@@ -550,13 +550,13 @@ struct CostUsageScannerTests {
             relativePath: "project-a/session-a.jsonl",
             contents: env.jsonl([entry1, entry2]))
 
-        var options = CostUsageScanner.Options(
+        var options = TokenUsageScanner.Options(
             codexSessionsRoot: nil,
             claudeProjectsRoots: [env.claudeProjectsRoot],
             cacheRoot: env.cacheRoot)
         options.refreshMinIntervalSeconds = 0
 
-        let report = CostUsageScanner.loadDailyReport(
+        let report = TokenUsageScanner.loadDailyReport(
             provider: .claude,
             since: day,
             until: day,
@@ -572,7 +572,7 @@ struct CostUsageScannerTests {
 
     @Test
     func `claude counts different request ids separately`() throws {
-        let env = try CostUsageTestEnvironment()
+        let env = try TokenUsageTestEnvironment()
         defer { env.cleanup() }
 
         let day = try env.makeLocalNoon(year: 2025, month: 12, day: 20)
@@ -617,13 +617,13 @@ struct CostUsageScannerTests {
             relativePath: "project-a/session-a.jsonl",
             contents: env.jsonl([entry1, entry2]))
 
-        var options = CostUsageScanner.Options(
+        var options = TokenUsageScanner.Options(
             codexSessionsRoot: nil,
             claudeProjectsRoots: [env.claudeProjectsRoot],
             cacheRoot: env.cacheRoot)
         options.refreshMinIntervalSeconds = 0
 
-        let report = CostUsageScanner.loadDailyReport(
+        let report = TokenUsageScanner.loadDailyReport(
             provider: .claude,
             since: day,
             until: day,
@@ -637,7 +637,7 @@ struct CostUsageScannerTests {
     }
 }
 
-struct CostUsageTestEnvironment {
+struct TokenUsageTestEnvironment {
     let root: URL
     let cacheRoot: URL
     let codexHomeRoot: URL
@@ -648,7 +648,7 @@ struct CostUsageTestEnvironment {
 
     init() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(
-            "codexbar-cost-usage-\(UUID().uuidString)",
+            "codexbar-token-usage-\(UUID().uuidString)",
             isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         self.root = root
@@ -680,7 +680,7 @@ struct CostUsageTestEnvironment {
         comps.hour = 12
         comps.minute = 0
         comps.second = 0
-        guard let date = comps.date else { throw NSError(domain: "CostUsageTestEnvironment", code: 1) }
+        guard let date = comps.date else { throw NSError(domain: "TokenUsageTestEnvironment", code: 1) }
         return date
     }
 
@@ -731,7 +731,7 @@ struct CostUsageTestEnvironment {
         let lines = try objects.map { obj in
             let data = try JSONSerialization.data(withJSONObject: obj)
             guard let text = String(bytes: data, encoding: .utf8) else {
-                throw NSError(domain: "CostUsageTestEnvironment", code: 2)
+                throw NSError(domain: "TokenUsageTestEnvironment", code: 2)
             }
             return text
         }

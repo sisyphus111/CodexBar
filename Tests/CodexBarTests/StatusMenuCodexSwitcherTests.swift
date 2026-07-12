@@ -76,7 +76,7 @@ struct StatusMenuCodexSwitcherTests {
             id: .codex,
             metadata: baseDescriptor.metadata,
             branding: baseDescriptor.branding,
-            tokenCost: baseDescriptor.tokenCost,
+            tokenUsage: baseDescriptor.tokenUsage,
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .cli, .oauth],
                 pipeline: ProviderFetchPipeline { _ in [strategy] }),
@@ -255,7 +255,7 @@ struct StatusMenuCodexSwitcherTests {
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
-        settings.costUsageEnabled = false
+        settings.tokenUsageEnabled = false
         settings.codexCookieSource = .off
         self.enableOnlyCodex(settings)
 

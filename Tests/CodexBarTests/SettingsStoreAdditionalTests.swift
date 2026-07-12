@@ -103,7 +103,7 @@ struct SettingsStoreAdditionalTests {
     }
 
     @Test
-    func `detects token cost usage sources from filesystem`() throws {
+    func `detects token token usage sources from filesystem`() throws {
         let fm = FileManager.default
         let root = fm.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         let sessions = root.appendingPathComponent("sessions", isDirectory: true)
@@ -114,7 +114,7 @@ struct SettingsStoreAdditionalTests {
 
         let env = ["CODEX_HOME": root.path]
 
-        #expect(SettingsStore.hasAnyTokenCostUsageSources(env: env, fileManager: fm))
+        #expect(SettingsStore.hasAnyTokenUsageSources(env: env, fileManager: fm))
     }
 
     private static func makeSettingsStore(suite: String) -> SettingsStore {

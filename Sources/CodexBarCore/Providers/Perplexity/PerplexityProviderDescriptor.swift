@@ -29,8 +29,8 @@ public enum PerplexityProviderDescriptor {
                 iconStyle: .perplexity,
                 iconResourceName: "ProviderIcon-perplexity",
                 color: ProviderColor(red: 32 / 255, green: 178 / 255, blue: 170 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: false,
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: false,
                 noDataMessage: { "Perplexity cost tracking is not supported." }),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .web],

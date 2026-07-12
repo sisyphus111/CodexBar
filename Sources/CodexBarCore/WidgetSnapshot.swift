@@ -63,20 +63,14 @@ public struct WidgetSnapshot: Codable, Sendable {
     }
 
     public struct TokenUsageSummary: Codable, Sendable {
-        public let sessionCostUSD: Double?
         public let sessionTokens: Int?
-        public let last30DaysCostUSD: Double?
         public let last30DaysTokens: Int?
 
         public init(
-            sessionCostUSD: Double?,
             sessionTokens: Int?,
-            last30DaysCostUSD: Double?,
             last30DaysTokens: Int?)
         {
-            self.sessionCostUSD = sessionCostUSD
             self.sessionTokens = sessionTokens
-            self.last30DaysCostUSD = last30DaysCostUSD
             self.last30DaysTokens = last30DaysTokens
         }
     }
@@ -84,12 +78,10 @@ public struct WidgetSnapshot: Codable, Sendable {
     public struct DailyUsagePoint: Codable, Sendable {
         public let dayKey: String
         public let totalTokens: Int?
-        public let costUSD: Double?
 
-        public init(dayKey: String, totalTokens: Int?, costUSD: Double?) {
+        public init(dayKey: String, totalTokens: Int?) {
             self.dayKey = dayKey
             self.totalTokens = totalTokens
-            self.costUSD = costUSD
         }
     }
 

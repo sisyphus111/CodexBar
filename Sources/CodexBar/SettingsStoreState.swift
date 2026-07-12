@@ -18,7 +18,7 @@ struct SettingsDefaultsState {
     var historicalTrackingEnabled: Bool
     var showAllTokenAccountsInMenu: Bool
     var menuBarMetricPreferencesRaw: [String: String]
-    var costUsageEnabled: Bool
+    var tokenUsageEnabled: Bool
     var hidePersonalInfo: Bool
     var randomBlinkEnabled: Bool
     var confettiOnWeeklyLimitResetsEnabled: Bool

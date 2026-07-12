@@ -27,9 +27,9 @@ public enum CopilotProviderDescriptor {
                 iconStyle: .copilot,
                 iconResourceName: "ProviderIcon-copilot",
                 color: ProviderColor(red: 168 / 255, green: 85 / 255, blue: 247 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: false,
-                noDataMessage: { "Copilot cost summary is not supported." }),
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: false,
+                noDataMessage: { "Copilot token history is not supported." }),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .api],
                 pipeline: ProviderFetchPipeline(resolveStrategies: { _ in [CopilotAPIFetchStrategy()] })),

@@ -901,14 +901,14 @@ extension StatusMenuTests {
     }
 
     @Test
-    func `hides credits section while preserving codex cost menu card section`() {
+    func `hides credits section while preserving codex token usage section`() {
         self.disableMenuCardsForTesting()
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
         settings.selectedMenuProvider = .codex
-        settings.costUsageEnabled = true
+        settings.tokenUsageEnabled = true
 
         let registry = ProviderRegistry.shared
         if let codexMeta = registry.metadata[.codex] {
@@ -934,18 +934,15 @@ extension StatusMenuTests {
             updatedAt: Date())
         store.openAIDashboardAttachmentAuthorized = true
         store.openAIDashboardRequiresLogin = false
-        store._setTokenSnapshotForTesting(CostUsageTokenSnapshot(
+        store._setTokenSnapshotForTesting(TokenUsageTokenSnapshot(
             sessionTokens: 123,
-            sessionCostUSD: 0.12,
             last30DaysTokens: 123,
-            last30DaysCostUSD: 1.23,
             daily: [
-                CostUsageDailyReport.Entry(
+                TokenUsageDailyReport.Entry(
                     date: "2025-12-23",
                     inputTokens: nil,
                     outputTokens: nil,
                     totalTokens: 123,
-                    costUSD: 1.23,
                     modelsUsed: nil,
                     modelBreakdowns: nil),
             ],
@@ -963,19 +960,19 @@ extension StatusMenuTests {
         controller.menuWillOpen(menu)
         let ids = menu.items.compactMap { $0.representedObject as? String }
         let creditsIndex = ids.firstIndex(of: "menuCardCredits")
-        let costIndex = ids.firstIndex(of: "menuCardCost")
+        let tokenUsageIndex = ids.firstIndex(of: "menuCardTokenUsage")
         #expect(creditsIndex == nil)
-        #expect(costIndex != nil)
+        #expect(tokenUsageIndex != nil)
     }
 
     @Test
-    func `hosted cost submenu preserves provider context after empty hydration`() {
+    func `hosted token usage submenu preserves provider context after empty hydration`() {
         self.disableMenuCardsForTesting()
         let settings = self.makeSettings()
         settings.statusChecksEnabled = false
         settings.refreshFrequency = .manual
         settings.mergeIcons = false
-        settings.costUsageEnabled = true
+        settings.tokenUsageEnabled = true
 
         let registry = ProviderRegistry.shared
         if let codexMeta = registry.metadata[.codex] {
@@ -993,7 +990,7 @@ extension StatusMenuTests {
             statusBar: self.makeStatusBarForTesting())
 
         let submenu = controller.makeHostedSubviewPlaceholderMenu(
-            chartID: StatusItemController.costHistoryChartID,
+            chartID: StatusItemController.tokenHistoryChartID,
             provider: .codex)
 
         controller.hydrateHostedSubviewMenuIfNeeded(submenu)
@@ -1001,18 +998,15 @@ extension StatusMenuTests {
         #expect(submenu.items.first?.title == "No data available")
         #expect(submenu.items.first?.toolTip == UsageProvider.codex.rawValue)
 
-        store._setTokenSnapshotForTesting(CostUsageTokenSnapshot(
+        store._setTokenSnapshotForTesting(TokenUsageTokenSnapshot(
             sessionTokens: 123,
-            sessionCostUSD: 0.12,
             last30DaysTokens: 123,
-            last30DaysCostUSD: 1.23,
             daily: [
-                CostUsageDailyReport.Entry(
+                TokenUsageDailyReport.Entry(
                     date: "2025-12-23",
                     inputTokens: nil,
                     outputTokens: nil,
                     totalTokens: 123,
-                    costUSD: 1.23,
                     modelsUsed: nil,
                     modelBreakdowns: nil),
             ],
@@ -1021,7 +1015,7 @@ extension StatusMenuTests {
         controller.hydrateHostedSubviewMenuIfNeeded(submenu)
         #expect(submenu.items.count == 1)
         #expect(submenu.items.first?.title != "No data available")
-        #expect(submenu.items.first?.representedObject as? String == StatusItemController.costHistoryChartID)
+        #expect(submenu.items.first?.representedObject as? String == StatusItemController.tokenHistoryChartID)
     }
 
     @Test
@@ -1032,7 +1026,7 @@ extension StatusMenuTests {
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
         settings.selectedMenuProvider = .claude
-        settings.costUsageEnabled = true
+        settings.tokenUsageEnabled = true
         settings.claudeWebExtrasEnabled = true
 
         let registry = ProviderRegistry.shared
@@ -1067,18 +1061,15 @@ extension StatusMenuTests {
             updatedAt: Date(),
             identity: identity)
         store._setSnapshotForTesting(snapshot, provider: .claude)
-        store._setTokenSnapshotForTesting(CostUsageTokenSnapshot(
+        store._setTokenSnapshotForTesting(TokenUsageTokenSnapshot(
             sessionTokens: 123,
-            sessionCostUSD: 0.12,
             last30DaysTokens: 123,
-            last30DaysCostUSD: 1.23,
             daily: [
-                CostUsageDailyReport.Entry(
+                TokenUsageDailyReport.Entry(
                     date: "2025-12-23",
                     inputTokens: nil,
                     outputTokens: nil,
                     totalTokens: 123,
-                    costUSD: 1.23,
                     modelsUsed: nil,
                     modelBreakdowns: nil),
             ],
@@ -1106,7 +1097,7 @@ extension StatusMenuTests {
         settings.refreshFrequency = .manual
         settings.mergeIcons = true
         settings.selectedMenuProvider = .vertexai
-        settings.costUsageEnabled = true
+        settings.tokenUsageEnabled = true
 
         let registry = ProviderRegistry.shared
         if let vertexMeta = registry.metadata[.vertexai] {
@@ -1122,18 +1113,15 @@ extension StatusMenuTests {
         let fetcher = UsageFetcher()
         let store = UsageStore(fetcher: fetcher, browserDetection: BrowserDetection(cacheTTL: 0), settings: settings)
         store._setErrorForTesting("No Vertex AI usage data found for the current project.", provider: .vertexai)
-        store._setTokenSnapshotForTesting(CostUsageTokenSnapshot(
+        store._setTokenSnapshotForTesting(TokenUsageTokenSnapshot(
             sessionTokens: 10,
-            sessionCostUSD: 0.01,
             last30DaysTokens: 100,
-            last30DaysCostUSD: 1.0,
             daily: [
-                CostUsageDailyReport.Entry(
+                TokenUsageDailyReport.Entry(
                     date: "2025-12-23",
                     inputTokens: nil,
                     outputTokens: nil,
                     totalTokens: 100,
-                    costUSD: 1.0,
                     modelsUsed: nil,
                     modelBreakdowns: nil),
             ],
@@ -1150,7 +1138,7 @@ extension StatusMenuTests {
         let menu = controller.makeMenu()
         controller.menuWillOpen(menu)
         let ids = menu.items.compactMap { $0.representedObject as? String }
-        #expect(ids.contains("menuCardCost"))
+        #expect(ids.contains("menuCardTokenUsage"))
     }
 }
 

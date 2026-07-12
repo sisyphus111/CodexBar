@@ -88,9 +88,9 @@ extension SettingsStore {
         return preference
     }
 
-    func isCostUsageEffectivelyEnabled(for provider: UsageProvider) -> Bool {
-        self.costUsageEnabled
-            && ProviderDescriptorRegistry.descriptor(for: provider).tokenCost.supportsTokenCost
+    func isTokenUsageEffectivelyEnabled(for provider: UsageProvider) -> Bool {
+        self.tokenUsageEnabled
+            && ProviderDescriptorRegistry.descriptor(for: provider).tokenUsage.supportsTokenUsage
     }
 
     var resetTimeDisplayStyle: ResetTimeDisplayStyle {

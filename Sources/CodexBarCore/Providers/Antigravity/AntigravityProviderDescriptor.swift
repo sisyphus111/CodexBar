@@ -29,9 +29,9 @@ public enum AntigravityProviderDescriptor {
                 iconStyle: .antigravity,
                 iconResourceName: "ProviderIcon-antigravity",
                 color: ProviderColor(red: 96 / 255, green: 186 / 255, blue: 126 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: false,
-                noDataMessage: { "Antigravity cost summary is not supported." }),
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: false,
+                noDataMessage: { "Antigravity token history is not supported." }),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .cli],
                 pipeline: ProviderFetchPipeline(resolveStrategies: { _ in [AntigravityStatusFetchStrategy()] })),

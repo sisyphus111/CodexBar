@@ -28,9 +28,9 @@ public enum KimiK2ProviderDescriptor {
                 iconStyle: .kimi,
                 iconResourceName: "ProviderIcon-kimi",
                 color: ProviderColor(red: 76 / 255, green: 0 / 255, blue: 255 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: false,
-                noDataMessage: { "Kimi K2 cost summary is not available." }),
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: false,
+                noDataMessage: { "Kimi K2 token history is not available." }),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .api],
                 pipeline: ProviderFetchPipeline(resolveStrategies: { _ in [KimiK2APIFetchStrategy()] })),

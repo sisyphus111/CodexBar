@@ -1,8 +1,8 @@
 import Foundation
 
 // swiftlint:disable type_body_length
-enum CostUsageScanner {
-    private static let log = CodexBarLog.logger(LogCategories.tokenCost)
+enum TokenUsageScanner {
+    private static let log = CodexBarLog.logger(LogCategories.tokenUsage)
 
     enum ClaudeLogProviderFilter {
         case all
@@ -38,7 +38,7 @@ enum CostUsageScanner {
         let days: [String: [String: [Int]]]
         let parsedBytes: Int64
         let lastModel: String?
-        let lastTotals: CostUsageCodexTotals?
+        let lastTotals: TokenUsageCodexTotals?
         let sessionId: String?
         let forkedFromId: String?
     }
@@ -51,7 +51,7 @@ enum CostUsageScanner {
     private struct CodexTimestampedTotals {
         let timestamp: String
         let date: Date?
-        let totals: CostUsageCodexTotals
+        let totals: TokenUsageCodexTotals
     }
 
     private struct CodexScanResources {
@@ -88,7 +88,7 @@ enum CostUsageScanner {
             while self.nextUnindexedFile < self.files.count {
                 let fileURL = self.files[self.nextUnindexedFile]
                 self.nextUnindexedFile += 1
-                guard let indexedSessionId = CostUsageScanner.parseCodexSessionIdentifier(fileURL: fileURL) else {
+                guard let indexedSessionId = TokenUsageScanner.parseCodexSessionIdentifier(fileURL: fileURL) else {
                     continue
                 }
                 self.fileURLBySessionId[indexedSessionId] = fileURL
@@ -109,7 +109,7 @@ enum CostUsageScanner {
                     if self.files.contains(where: { $0.path == fileURL.path }) {
                         continue
                     }
-                    guard let indexedSessionId = CostUsageScanner.parseCodexSessionIdentifier(fileURL: fileURL) else {
+                    guard let indexedSessionId = TokenUsageScanner.parseCodexSessionIdentifier(fileURL: fileURL) else {
                         continue
                     }
                     self.fileURLBySessionId[indexedSessionId] = fileURL
@@ -132,16 +132,16 @@ enum CostUsageScanner {
             self.fileIndex = fileIndex
         }
 
-        func inheritedTotals(for sessionId: String, atOrBefore cutoffTimestamp: String) -> CostUsageCodexTotals? {
+        func inheritedTotals(for sessionId: String, atOrBefore cutoffTimestamp: String) -> TokenUsageCodexTotals? {
             guard !cutoffTimestamp.isEmpty else { return nil }
-            let cutoffDate = CostUsageScanner.dateFromTimestamp(cutoffTimestamp)
+            let cutoffDate = TokenUsageScanner.dateFromTimestamp(cutoffTimestamp)
             if cutoffDate == nil {
-                CostUsageScanner.log.warning(
-                    "Codex cost usage could not parse fork timestamp; falling back to lexical comparison",
+                TokenUsageScanner.log.warning(
+                    "Codex token usage could not parse fork timestamp; falling back to lexical comparison",
                     metadata: ["sessionId": sessionId, "timestamp": cutoffTimestamp])
             }
             let snapshots = self.snapshots(for: sessionId)
-            var inherited: CostUsageCodexTotals?
+            var inherited: TokenUsageCodexTotals?
             for snapshot in snapshots {
                 let isAtOrBefore: Bool = if let snapshotDate = snapshot.date, let cutoffDate {
                     snapshotDate <= cutoffDate
@@ -160,21 +160,21 @@ enum CostUsageScanner {
                 return cached
             }
             guard let fileURL = self.fileIndex.fileURL(for: sessionId) else {
-                CostUsageScanner.log.warning(
-                    "Codex cost usage parent session file not found",
+                TokenUsageScanner.log.warning(
+                    "Codex token usage parent session file not found",
                     metadata: ["sessionId": sessionId])
                 return []
             }
-            let parsed = CostUsageScanner.parseCodexTokenSnapshots(fileURL: fileURL)
+            let parsed = TokenUsageScanner.parseCodexTokenSnapshots(fileURL: fileURL)
             guard let parsedSessionId = parsed.sessionId else {
-                CostUsageScanner.log.warning(
-                    "Codex cost usage parent session missing session metadata",
+                TokenUsageScanner.log.warning(
+                    "Codex token usage parent session missing session metadata",
                     metadata: ["sessionId": sessionId, "path": fileURL.path])
                 return []
             }
             if parsedSessionId != sessionId {
-                CostUsageScanner.log.warning(
-                    "Codex cost usage parent session resolved to mismatched session id",
+                TokenUsageScanner.log.warning(
+                    "Codex token usage parent session resolved to mismatched session id",
                     metadata: [
                         "requestedSessionId": sessionId,
                         "resolvedSessionId": parsedSessionId,
@@ -209,7 +209,6 @@ enum CostUsageScanner {
         let cacheRead: Int
         let cacheCreate: Int
         let output: Int
-        let costNanos: Int
     }
 
     static func loadDailyReport(
@@ -217,10 +216,10 @@ enum CostUsageScanner {
         since: Date,
         until: Date,
         now: Date = Date(),
-        options: Options = Options()) -> CostUsageDailyReport
+        options: Options = Options()) -> TokenUsageDailyReport
     {
-        let range = CostUsageDayRange(since: since, until: until)
-        let emptyReport = CostUsageDailyReport(data: [], summary: nil)
+        let range = TokenUsageDayRange(since: since, until: until)
+        let emptyReport = TokenUsageDailyReport(data: [], summary: nil)
 
         switch provider {
         case .codex:
@@ -243,7 +242,7 @@ enum CostUsageScanner {
 
     // MARK: - Day keys
 
-    struct CostUsageDayRange {
+    struct TokenUsageDayRange {
         let sinceKey: String
         let untilKey: String
         let scanSinceKey: String
@@ -322,13 +321,13 @@ enum CostUsageScanner {
     }
 
     private static func cachedCodexSessionFiles(
-        cache: CostUsageCache,
-        range: CostUsageDayRange,
+        cache: TokenUsageCache,
+        range: TokenUsageDayRange,
         roots: [URL]) -> [URL]
     {
         cache.files.compactMap { path, usage in
             let hasRelevantDay = usage.days.keys.contains {
-                CostUsageDayRange.isInRange(dayKey: $0, since: range.scanSinceKey, until: range.scanUntilKey)
+                TokenUsageDayRange.isInRange(dayKey: $0, since: range.scanSinceKey, until: range.scanUntilKey)
             }
             guard hasRelevantDay else { return nil }
             guard FileManager.default.fileExists(atPath: path) else { return nil }
@@ -338,7 +337,7 @@ enum CostUsageScanner {
         }
     }
 
-    private static func cachedCodexSessionIndex(cache: CostUsageCache, roots: [URL]) -> [String: URL] {
+    private static func cachedCodexSessionIndex(cache: TokenUsageCache, roots: [URL]) -> [String: URL] {
         var out: [String: URL] = [:]
         for (path, usage) in cache.files {
             guard let sessionId = usage.sessionId, !sessionId.isEmpty else { continue }
@@ -433,7 +432,7 @@ enum CostUsageScanner {
         var out: [URL] = []
         for item in items where item.pathExtension.lowercased() == "jsonl" {
             if let dayKey = Self.dayKeyFromFilename(item.lastPathComponent) {
-                if !CostUsageDayRange.isInRange(dayKey: dayKey, since: scanSinceKey, until: scanUntilKey) {
+                if !TokenUsageDayRange.isInRange(dayKey: dayKey, since: scanSinceKey, until: scanUntilKey) {
                     continue
                 }
             }
@@ -493,7 +492,7 @@ enum CostUsageScanner {
             handle = try FileHandle(forReadingFrom: fileURL)
         } catch {
             self.log.warning(
-                "Codex cost usage failed to open session file for session id parsing",
+                "Codex token usage failed to open session file for session id parsing",
                 metadata: ["path": fileURL.path, "error": error.localizedDescription])
             return nil
         }
@@ -535,7 +534,7 @@ enum CostUsageScanner {
             }
         } catch {
             self.log.warning(
-                "Codex cost usage failed while reading session file for session id parsing",
+                "Codex token usage failed while reading session file for session id parsing",
                 metadata: ["path": fileURL.path, "error": error.localizedDescription])
             return nil
         }
@@ -551,7 +550,7 @@ enum CostUsageScanner {
         snapshots: [CodexTimestampedTotals])
     {
         var sessionId: String?
-        var previousTotals: CostUsageCodexTotals?
+        var previousTotals: TokenUsageCodexTotals?
         var snapshots: [CodexTimestampedTotals] = []
         var warnedAboutUnparsedTimestamp = false
 
@@ -560,7 +559,7 @@ enum CostUsageScanner {
             if date == nil, !warnedAboutUnparsedTimestamp {
                 warnedAboutUnparsedTimestamp = true
                 self.log.warning(
-                    "Codex cost usage could not parse parent token snapshot timestamp; "
+                    "Codex token usage could not parse parent token snapshot timestamp; "
                         + "falling back to lexical comparison",
                     metadata: ["path": fileURL.path, "timestamp": timestamp])
             }
@@ -568,7 +567,7 @@ enum CostUsageScanner {
         }
 
         do {
-            _ = try CostUsageJsonl.scan(
+            _ = try TokenUsageJsonl.scan(
                 fileURL: fileURL,
                 maxLineBytes: 512 * 1024,
                 prefixBytes: 512 * 1024,
@@ -602,7 +601,7 @@ enum CostUsageScanner {
                     }
 
                     if let total = info["total_token_usage"] as? [String: Any] {
-                        let next = CostUsageCodexTotals(
+                        let next = TokenUsageCodexTotals(
                             input: toInt(total["input_tokens"]),
                             cached: toInt(total["cached_input_tokens"] ?? total["cache_read_input_tokens"]),
                             output: toInt(total["output_tokens"]))
@@ -613,7 +612,7 @@ enum CostUsageScanner {
                             totals: next))
                     } else if let last = info["last_token_usage"] as? [String: Any] {
                         let base = previousTotals ?? .init(input: 0, cached: 0, output: 0)
-                        let next = CostUsageCodexTotals(
+                        let next = TokenUsageCodexTotals(
                             input: base.input + toInt(last["input_tokens"]),
                             cached: base.cached + toInt(last["cached_input_tokens"] ?? last["cache_read_input_tokens"]),
                             output: base.output + toInt(last["output_tokens"]))
@@ -626,7 +625,7 @@ enum CostUsageScanner {
                 })
         } catch {
             self.log.warning(
-                "Codex cost usage failed while scanning parent token snapshots",
+                "Codex token usage failed while scanning parent token snapshots",
                 metadata: ["path": fileURL.path, "error": error.localizedDescription])
         }
 
@@ -636,25 +635,25 @@ enum CostUsageScanner {
     // swiftlint:disable:next cyclomatic_complexity function_body_length
     static func parseCodexFile(
         fileURL: URL,
-        range: CostUsageDayRange,
+        range: TokenUsageDayRange,
         startOffset: Int64 = 0,
         initialModel: String? = nil,
-        initialTotals: CostUsageCodexTotals? = nil,
-        inheritedTotalsResolver: ((String, String) -> CostUsageCodexTotals?)? = nil) -> CodexParseResult
+        initialTotals: TokenUsageCodexTotals? = nil,
+        inheritedTotalsResolver: ((String, String) -> TokenUsageCodexTotals?)? = nil) -> CodexParseResult
     {
         var currentModel = initialModel
         var previousTotals = initialTotals
         var sessionId: String?
         var forkedFromId: String?
-        var inheritedTotals: CostUsageCodexTotals?
-        var remainingInheritedTotals: CostUsageCodexTotals?
+        var inheritedTotals: TokenUsageCodexTotals?
+        var remainingInheritedTotals: TokenUsageCodexTotals?
 
         var days: [String: [String: [Int]]] = [:]
 
         func add(dayKey: String, model: String, input: Int, cached: Int, output: Int) {
-            guard CostUsageDayRange.isInRange(dayKey: dayKey, since: range.scanSinceKey, until: range.scanUntilKey)
+            guard TokenUsageDayRange.isInRange(dayKey: dayKey, since: range.scanSinceKey, until: range.scanUntilKey)
             else { return }
-            let normModel = CostUsagePricing.normalizeCodexModel(model)
+            let normModel = TokenUsageModelNormalizer.codex(model)
 
             var dayModels = days[dayKey] ?? [:]
             var packed = dayModels[normModel] ?? [0, 0, 0]
@@ -684,7 +683,7 @@ enum CostUsageScanner {
 
         let parsedBytes: Int64
         do {
-            parsedBytes = try CostUsageJsonl.scan(
+            parsedBytes = try TokenUsageJsonl.scan(
                 fileURL: fileURL,
                 offset: startOffset,
                 maxLineBytes: maxLineBytes,
@@ -774,10 +773,10 @@ enum CostUsageScanner {
                     var deltaCached = 0
                     var deltaOutput = 0
 
-                    func adjustedLastDelta(_ rawDelta: CostUsageCodexTotals) -> CostUsageCodexTotals {
+                    func adjustedLastDelta(_ rawDelta: TokenUsageCodexTotals) -> TokenUsageCodexTotals {
                         guard var remaining = remainingInheritedTotals else { return rawDelta }
 
-                        let adjusted = CostUsageCodexTotals(
+                        let adjusted = TokenUsageCodexTotals(
                             input: max(0, rawDelta.input - remaining.input),
                             cached: max(0, rawDelta.cached - remaining.cached),
                             output: max(0, rawDelta.output - remaining.output))
@@ -797,13 +796,13 @@ enum CostUsageScanner {
                     }
 
                     if let total {
-                        let rawTotals = CostUsageCodexTotals(
+                        let rawTotals = TokenUsageCodexTotals(
                             input: toInt(total["input_tokens"]),
                             cached: toInt(total["cached_input_tokens"] ?? total["cache_read_input_tokens"]),
                             output: toInt(total["output_tokens"]))
 
-                        let currentTotals: CostUsageCodexTotals = if let inheritedTotals {
-                            CostUsageCodexTotals(
+                        let currentTotals: TokenUsageCodexTotals = if let inheritedTotals {
+                            TokenUsageCodexTotals(
                                 input: max(0, rawTotals.input - inheritedTotals.input),
                                 cached: max(0, rawTotals.cached - inheritedTotals.cached),
                                 output: max(0, rawTotals.output - inheritedTotals.output))
@@ -818,7 +817,7 @@ enum CostUsageScanner {
                         previousTotals = currentTotals
                         remainingInheritedTotals = nil
                     } else if let last {
-                        let rawDelta = CostUsageCodexTotals(
+                        let rawDelta = TokenUsageCodexTotals(
                             input: max(0, toInt(last["input_tokens"])),
                             cached: max(0, toInt(last["cached_input_tokens"] ?? last["cache_read_input_tokens"])),
                             output: max(0, toInt(last["output_tokens"])))
@@ -827,7 +826,7 @@ enum CostUsageScanner {
                         deltaCached = adjustedDelta.cached
                         deltaOutput = adjustedDelta.output
                         let prev = previousTotals ?? .init(input: 0, cached: 0, output: 0)
-                        previousTotals = CostUsageCodexTotals(
+                        previousTotals = TokenUsageCodexTotals(
                             input: prev.input + deltaInput,
                             cached: prev.cached + deltaCached,
                             output: prev.output + deltaOutput)
@@ -841,7 +840,7 @@ enum CostUsageScanner {
                 })
         } catch {
             self.log.warning(
-                "Codex cost usage failed while scanning session file",
+                "Codex token usage failed while scanning session file",
                 metadata: ["path": fileURL.path, "error": error.localizedDescription])
             parsedBytes = startOffset
         }
@@ -857,8 +856,8 @@ enum CostUsageScanner {
 
     private static func scanCodexFile(
         fileURL: URL,
-        range: CostUsageDayRange,
-        cache: inout CostUsageCache,
+        range: TokenUsageDayRange,
+        cache: inout TokenUsageCache,
         state: inout CodexScanState,
         resources: CodexScanResources)
     {
@@ -869,7 +868,7 @@ enum CostUsageScanner {
         let mtimeMs = Int64(mtime * 1000)
         let fileId = Self.fileIdentityString(fileURL: fileURL)
 
-        func dropCachedFile(_ cached: CostUsageFileUsage?) {
+        func dropCachedFile(_ cached: TokenUsageFileUsage?) {
             if let cached {
                 Self.applyFileDays(cache: &cache, fileDays: cached.days, sign: -1)
             }
@@ -980,8 +979,12 @@ enum CostUsageScanner {
         }
     }
 
-    private static func loadCodexDaily(range: CostUsageDayRange, now: Date, options: Options) -> CostUsageDailyReport {
-        var cache = CostUsageCacheIO.load(provider: .codex, cacheRoot: options.cacheRoot)
+    private static func loadCodexDaily(
+        range: TokenUsageDayRange,
+        now: Date,
+        options: Options) -> TokenUsageDailyReport
+    {
+        var cache = TokenUsageCacheIO.load(provider: .codex, cacheRoot: options.cacheRoot)
         let nowMs = Int64(now.timeIntervalSince1970 * 1000)
 
         let refreshMs = Int64(max(0, options.refreshMinIntervalSeconds) * 1000)
@@ -992,7 +995,7 @@ enum CostUsageScanner {
 
         if shouldRefresh {
             if options.forceRescan {
-                cache = CostUsageCache()
+                cache = TokenUsageCache()
             }
 
             let roots = self.codexSessionsRoots(options: options)
@@ -1066,25 +1069,23 @@ enum CostUsageScanner {
             Self.pruneDays(cache: &cache, sinceKey: range.scanSinceKey, untilKey: range.scanUntilKey)
             cache.roots = rootsFingerprint
             cache.lastScanUnixMs = nowMs
-            CostUsageCacheIO.save(provider: .codex, cache: cache, cacheRoot: options.cacheRoot)
+            TokenUsageCacheIO.save(provider: .codex, cache: cache, cacheRoot: options.cacheRoot)
         }
 
         return Self.buildCodexReportFromCache(cache: cache, range: range)
     }
 
     private static func buildCodexReportFromCache(
-        cache: CostUsageCache,
-        range: CostUsageDayRange) -> CostUsageDailyReport
+        cache: TokenUsageCache,
+        range: TokenUsageDayRange) -> TokenUsageDailyReport
     {
-        var entries: [CostUsageDailyReport.Entry] = []
+        var entries: [TokenUsageDailyReport.Entry] = []
         var totalInput = 0
         var totalOutput = 0
         var totalTokens = 0
-        var totalCost: Double = 0
-        var costSeen = false
 
         let dayKeys = cache.days.keys.sorted().filter {
-            CostUsageDayRange.isInRange(dayKey: $0, since: range.sinceKey, until: range.untilKey)
+            TokenUsageDayRange.isInRange(dayKey: $0, since: range.sinceKey, until: range.untilKey)
         }
 
         for day in dayKeys {
@@ -1094,67 +1095,46 @@ enum CostUsageScanner {
             var dayInput = 0
             var dayOutput = 0
 
-            var breakdown: [CostUsageDailyReport.ModelBreakdown] = []
-            var dayCost: Double = 0
-            var dayCostSeen = false
-
+            var breakdown: [TokenUsageDailyReport.ModelBreakdown] = []
             for model in modelNames {
                 let packed = models[model] ?? [0, 0, 0]
                 let input = packed[safe: 0] ?? 0
-                let cached = packed[safe: 1] ?? 0
                 let output = packed[safe: 2] ?? 0
                 let totalTokens = input + output
 
                 dayInput += input
                 dayOutput += output
 
-                let cost = CostUsagePricing.codexCostUSD(
-                    model: model,
-                    inputTokens: input,
-                    cachedInputTokens: cached,
-                    outputTokens: output)
                 breakdown.append(
-                    CostUsageDailyReport.ModelBreakdown(
+                    TokenUsageDailyReport.ModelBreakdown(
                         modelName: model,
-                        costUSD: cost,
                         totalTokens: totalTokens))
-                if let cost {
-                    dayCost += cost
-                    dayCostSeen = true
-                }
             }
 
             let sortedBreakdown = Self.sortedModelBreakdowns(breakdown)
 
             let dayTotal = dayInput + dayOutput
-            let entryCost = dayCostSeen ? dayCost : nil
-            entries.append(CostUsageDailyReport.Entry(
+            entries.append(TokenUsageDailyReport.Entry(
                 date: day,
                 inputTokens: dayInput,
                 outputTokens: dayOutput,
                 totalTokens: dayTotal,
-                costUSD: entryCost,
                 modelsUsed: modelNames,
                 modelBreakdowns: sortedBreakdown))
 
             totalInput += dayInput
             totalOutput += dayOutput
             totalTokens += dayTotal
-            if let entryCost {
-                totalCost += entryCost
-                costSeen = true
-            }
         }
 
-        let summary: CostUsageDailyReport.Summary? = entries.isEmpty
+        let summary: TokenUsageDailyReport.Summary? = entries.isEmpty
             ? nil
-            : CostUsageDailyReport.Summary(
+            : TokenUsageDailyReport.Summary(
                 totalInputTokens: totalInput,
                 totalOutputTokens: totalOutput,
-                totalTokens: totalTokens,
-                totalCostUSD: costSeen ? totalCost : nil)
+                totalTokens: totalTokens)
 
-        return CostUsageDailyReport(data: entries, summary: summary)
+        return TokenUsageDailyReport(data: entries, summary: summary)
     }
 
     // MARK: - Shared cache mutations
@@ -1165,12 +1145,12 @@ enum CostUsageScanner {
         days: [String: [String: [Int]]],
         parsedBytes: Int64?,
         lastModel: String? = nil,
-        lastTotals: CostUsageCodexTotals? = nil,
+        lastTotals: TokenUsageCodexTotals? = nil,
         sessionId: String? = nil,
         forkedFromId: String? = nil,
-        claudeRows: [ClaudeUsageRow]? = nil) -> CostUsageFileUsage
+        claudeRows: [ClaudeUsageRow]? = nil) -> TokenUsageFileUsage
     {
-        CostUsageFileUsage(
+        TokenUsageFileUsage(
             mtimeUnixMs: mtimeUnixMs,
             size: size,
             days: days,
@@ -1206,7 +1186,7 @@ enum CostUsageScanner {
         }
     }
 
-    static func applyFileDays(cache: inout CostUsageCache, fileDays: [String: [String: [Int]]], sign: Int) {
+    static func applyFileDays(cache: inout TokenUsageCache, fileDays: [String: [String: [Int]]], sign: Int) {
         for (day, models) in fileDays {
             var dayModels = cache.days[day] ?? [:]
             for (model, packed) in models {
@@ -1227,8 +1207,8 @@ enum CostUsageScanner {
         }
     }
 
-    static func pruneDays(cache: inout CostUsageCache, sinceKey: String, untilKey: String) {
-        for key in cache.days.keys where !CostUsageDayRange.isInRange(dayKey: key, since: sinceKey, until: untilKey) {
+    static func pruneDays(cache: inout TokenUsageCache, sinceKey: String, untilKey: String) {
+        for key in cache.days.keys where !TokenUsageDayRange.isInRange(dayKey: key, since: sinceKey, until: untilKey) {
             cache.days.removeValue(forKey: key)
         }
     }
@@ -1243,16 +1223,10 @@ enum CostUsageScanner {
         return out
     }
 
-    static func sortedModelBreakdowns(_ breakdowns: [CostUsageDailyReport.ModelBreakdown])
-        -> [CostUsageDailyReport.ModelBreakdown]
+    static func sortedModelBreakdowns(_ breakdowns: [TokenUsageDailyReport.ModelBreakdown])
+        -> [TokenUsageDailyReport.ModelBreakdown]
     {
         breakdowns.sorted { lhs, rhs in
-            let lhsCost = lhs.costUSD ?? -1
-            let rhsCost = rhs.costUSD ?? -1
-            if lhsCost != rhsCost {
-                return lhsCost > rhsCost
-            }
-
             let lhsTokens = lhs.totalTokens ?? -1
             let rhsTokens = rhs.totalTokens ?? -1
             if lhsTokens != rhsTokens {

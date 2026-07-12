@@ -111,7 +111,7 @@ struct ProviderRegistry {
         }
         // Managed Codex routing only scopes remote account fetches such as identity, plan,
         // quotas, and dashboard data, and only when the active source is a managed account.
-        // Token-cost/session history is intentionally not routed through the managed home
+        // Token/session history is intentionally not routed through the managed home
         // because that data is currently treated as provider-level local telemetry from this
         // Mac's Codex sessions, not as account-owned remote state. If we later want
         // account-scoped token history in the UI, that needs an explicit product decision and

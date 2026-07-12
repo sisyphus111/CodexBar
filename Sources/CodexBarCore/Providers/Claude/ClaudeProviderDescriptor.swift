@@ -29,8 +29,8 @@ public enum ClaudeProviderDescriptor {
                 iconStyle: .claude,
                 iconResourceName: "ProviderIcon-claude",
                 color: ProviderColor(red: 204 / 255, green: 124 / 255, blue: 94 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: true,
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: true,
                 noDataMessage: self.noDataMessage),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .web, .cli, .oauth],

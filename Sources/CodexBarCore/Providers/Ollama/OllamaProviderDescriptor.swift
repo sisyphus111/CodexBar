@@ -28,9 +28,9 @@ public enum OllamaProviderDescriptor {
                 iconStyle: .ollama,
                 iconResourceName: "ProviderIcon-ollama",
                 color: ProviderColor(red: 136 / 255, green: 136 / 255, blue: 136 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: false,
-                noDataMessage: { "Ollama cost summary is not supported." }),
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: false,
+                noDataMessage: { "Ollama token history is not supported." }),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .web],
                 pipeline: ProviderFetchPipeline(resolveStrategies: { _ in [OllamaStatusFetchStrategy()] })),

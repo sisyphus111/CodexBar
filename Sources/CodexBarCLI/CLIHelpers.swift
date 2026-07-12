@@ -282,11 +282,11 @@ extension CodexBarCLI {
         case CodexStatusProbeError.timedOut,
              TTYCommandRunner.Error.timedOut,
              GeminiStatusProbeError.timedOut,
-             CostUsageError.timedOut:
+             TokenUsageError.timedOut:
             ExitCode(4)
         case ClaudeUsageError.parseFailed,
              ClaudeUsageError.oauthFailed,
-             CostUsageError.unsupportedProvider,
+             TokenUsageError.unsupportedProvider,
              UsageError.decodeFailed,
              UsageError.noRateLimitsFound,
              GeminiStatusProbeError.parseFailed:
@@ -356,10 +356,6 @@ struct CLIArgumentError: LocalizedError {
 extension CodexBarCLI {
     static func _usageSignatureForTesting() -> CommandSignature {
         CommandSignature.describe(UsageOptions())
-    }
-
-    static func _costSignatureForTesting() -> CommandSignature {
-        CommandSignature.describe(CostOptions())
     }
 
     static func _decodeFormatForTesting(from values: ParsedValues) -> OutputFormat {

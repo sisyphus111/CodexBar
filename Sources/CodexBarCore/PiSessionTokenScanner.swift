@@ -1,6 +1,6 @@
 import Foundation
 
-enum PiSessionCostScanner {
+enum PiSessionTokenScanner {
     struct Options {
         var piSessionsRoot: URL?
         var cacheRoot: URL?
@@ -31,7 +31,6 @@ enum PiSessionCostScanner {
         let modelName: String
     }
 
-    private static let costScale = 1_000_000_000.0
     private static let maxLineBytes = 16 * 1024 * 1024
     private static let maxSafeRoundedInt = Double(Int.max) - 1
 
@@ -40,14 +39,14 @@ enum PiSessionCostScanner {
         since: Date,
         until: Date,
         now: Date = Date(),
-        options: Options = Options()) -> CostUsageDailyReport
+        options: Options = Options()) -> TokenUsageDailyReport
     {
         guard provider == .codex || provider == .claude else {
-            return CostUsageDailyReport(data: [], summary: nil)
+            return TokenUsageDailyReport(data: [], summary: nil)
         }
 
-        let range = CostUsageScanner.CostUsageDayRange(since: since, until: until)
-        var cache = PiSessionCostCacheIO.load(cacheRoot: options.cacheRoot)
+        let range = TokenUsageScanner.TokenUsageDayRange(since: since, until: until)
+        var cache = PiSessionTokenCacheIO.load(cacheRoot: options.cacheRoot)
         let nowMs = Int64(now.timeIntervalSince1970 * 1000)
         let refreshMs = Int64(max(0, options.refreshMinIntervalSeconds) * 1000)
         let windowExpanded = self.requestedWindowExpandsCache(range: range, cache: cache)
@@ -84,15 +83,15 @@ enum PiSessionCostScanner {
             cache.scanSinceKey = range.scanSinceKey
             cache.scanUntilKey = range.scanUntilKey
             cache.lastScanUnixMs = nowMs
-            PiSessionCostCacheIO.save(cache: cache, cacheRoot: options.cacheRoot)
+            PiSessionTokenCacheIO.save(cache: cache, cacheRoot: options.cacheRoot)
         }
 
         return self.buildReport(provider: provider, cache: cache, range: range)
     }
 
     private static func requestedWindowExpandsCache(
-        range: CostUsageScanner.CostUsageDayRange,
-        cache: PiSessionCostCache) -> Bool
+        range: TokenUsageScanner.TokenUsageDayRange,
+        cache: PiSessionTokenCache) -> Bool
     {
         guard let cachedSince = cache.scanSinceKey,
               let cachedUntil = cache.scanUntilKey
@@ -163,9 +162,9 @@ enum PiSessionCostScanner {
 
     private static func scanPiSessionFile(
         fileURL: URL,
-        range: CostUsageScanner.CostUsageDayRange,
+        range: TokenUsageScanner.TokenUsageDayRange,
         forceRescan: Bool,
-        cache: inout PiSessionCostCache)
+        cache: inout PiSessionTokenCache)
     {
         let path = fileURL.path
         let attrs = (try? FileManager.default.attributesOfItem(atPath: path)) ?? [:]
@@ -235,7 +234,7 @@ enum PiSessionCostScanner {
 
     private static func parsePiSessionFile(
         fileURL: URL,
-        range: CostUsageScanner.CostUsageDayRange,
+        range: TokenUsageScanner.TokenUsageDayRange,
         startOffset: Int64 = 0,
         initialModelContext: PiModelContext? = nil) -> ParseResult
     {
@@ -244,7 +243,7 @@ enum PiSessionCostScanner {
 
         func add(provider: UsageProvider, dayKey: String, modelName: String, usage: PiPackedUsage) {
             guard !usage.isZero else { return }
-            guard CostUsageScanner.CostUsageDayRange.isInRange(
+            guard TokenUsageScanner.TokenUsageDayRange.isInRange(
                 dayKey: dayKey,
                 since: range.scanSinceKey,
                 until: range.scanUntilKey)
@@ -273,7 +272,7 @@ enum PiSessionCostScanner {
             }
         }
 
-        let parsedBytes = (try? CostUsageJsonl.scan(
+        let parsedBytes = (try? TokenUsageJsonl.scan(
             fileURL: fileURL,
             offset: startOffset,
             maxLineBytes: Self.maxLineBytes,
@@ -298,7 +297,7 @@ enum PiSessionCostScanner {
                     fallback: currentModelContext)
                 guard let identity else { return }
                 guard let date = self.timestampDate(entry: object, message: message) else { return }
-                let dayKey = CostUsageScanner.CostUsageDayRange.dayKey(from: date)
+                let dayKey = TokenUsageScanner.TokenUsageDayRange.dayKey(from: date)
                 let usage = self.extractUsage(
                     provider: identity.provider,
                     modelName: identity.modelName,
@@ -396,9 +395,9 @@ enum PiSessionCostScanner {
         guard !trimmed.isEmpty else { return nil }
         return switch provider {
         case .codex:
-            CostUsagePricing.normalizeCodexModel(trimmed)
+            TokenUsageModelNormalizer.codex(trimmed)
         case .claude:
-            CostUsagePricing.normalizeClaudeModel(trimmed)
+            TokenUsageModelNormalizer.claude(trimmed)
         default:
             trimmed
         }
@@ -476,47 +475,12 @@ enum PiSessionCostScanner {
         let derivedTotal = input + cacheRead + cacheWrite + output
         let totalTokens = max(directTotal, derivedTotal)
 
-        let rawUsage = PiPackedUsage(
+        return PiPackedUsage(
             inputTokens: input,
             cacheReadTokens: cacheRead,
             cacheWriteTokens: cacheWrite,
             outputTokens: output,
             totalTokens: totalTokens)
-        let costUSD = self.computedCostUSD(provider: provider, modelName: modelName, usage: rawUsage)
-        let costNanos = costUSD.map { Int64(($0 * self.costScale).rounded()) } ?? 0
-
-        return PiPackedUsage(
-            inputTokens: rawUsage.inputTokens,
-            cacheReadTokens: rawUsage.cacheReadTokens,
-            cacheWriteTokens: rawUsage.cacheWriteTokens,
-            outputTokens: rawUsage.outputTokens,
-            totalTokens: rawUsage.totalTokens,
-            costNanos: costNanos,
-            costSampleCount: costUSD == nil ? 0 : 1)
-    }
-
-    private static func computedCostUSD(
-        provider: UsageProvider,
-        modelName: String,
-        usage: PiPackedUsage) -> Double?
-    {
-        switch provider {
-        case .codex:
-            CostUsagePricing.codexCostUSD(
-                model: modelName,
-                inputTokens: usage.inputTokens + usage.cacheReadTokens + usage.cacheWriteTokens,
-                cachedInputTokens: usage.cacheReadTokens,
-                outputTokens: usage.outputTokens)
-        case .claude:
-            CostUsagePricing.claudeCostUSD(
-                model: modelName,
-                inputTokens: usage.inputTokens,
-                cacheReadInputTokens: usage.cacheReadTokens,
-                cacheCreationInputTokens: usage.cacheWriteTokens,
-                outputTokens: usage.outputTokens)
-        default:
-            nil
-        }
     }
 
     private static func readNonNegativeInt(_ value: Any?) -> Int {
@@ -549,25 +513,23 @@ enum PiSessionCostScanner {
 
     private static func buildReport(
         provider: UsageProvider,
-        cache: PiSessionCostCache,
-        range: CostUsageScanner.CostUsageDayRange) -> CostUsageDailyReport
+        cache: PiSessionTokenCache,
+        range: TokenUsageScanner.TokenUsageDayRange) -> TokenUsageDailyReport
     {
         guard let providerDays = cache.daysByProvider[provider.rawValue] else {
-            return CostUsageDailyReport(data: [], summary: nil)
+            return TokenUsageDailyReport(data: [], summary: nil)
         }
 
         let dayKeys = providerDays.keys.sorted().filter {
-            CostUsageScanner.CostUsageDayRange.isInRange(dayKey: $0, since: range.sinceKey, until: range.untilKey)
+            TokenUsageScanner.TokenUsageDayRange.isInRange(dayKey: $0, since: range.sinceKey, until: range.untilKey)
         }
 
-        var entries: [CostUsageDailyReport.Entry] = []
+        var entries: [TokenUsageDailyReport.Entry] = []
         var totalInput = 0
         var totalOutput = 0
         var totalCacheRead = 0
         var totalCacheWrite = 0
         var totalTokens = 0
-        var totalCostNanos: Int64 = 0
-        var totalCostSamples = 0
 
         for dayKey in dayKeys {
             guard let models = providerDays[dayKey] else { continue }
@@ -578,37 +540,31 @@ enum PiSessionCostScanner {
             var dayCacheRead = 0
             var dayCacheWrite = 0
             var dayTotalTokens = 0
-            var dayCostNanos: Int64 = 0
-            var dayCostSamples = 0
-            var breakdown: [CostUsageDailyReport.ModelBreakdown] = []
+            var breakdown: [TokenUsageDailyReport.ModelBreakdown] = []
 
             for modelName in modelNames {
                 let packed = models[modelName] ?? PiPackedUsage()
                 let modelTotalTokens = max(
                     packed.totalTokens,
                     packed.inputTokens + packed.cacheReadTokens + packed.cacheWriteTokens + packed.outputTokens)
-                breakdown.append(CostUsageDailyReport.ModelBreakdown(
+                breakdown.append(TokenUsageDailyReport.ModelBreakdown(
                     modelName: modelName,
-                    costUSD: packed.costSampleCount > 0 ? Double(packed.costNanos) / Self.costScale : nil,
                     totalTokens: modelTotalTokens > 0 ? modelTotalTokens : nil))
                 dayInput += packed.inputTokens
                 dayOutput += packed.outputTokens
                 dayCacheRead += packed.cacheReadTokens
                 dayCacheWrite += packed.cacheWriteTokens
                 dayTotalTokens += modelTotalTokens
-                dayCostNanos += packed.costNanos
-                dayCostSamples += packed.costSampleCount
             }
 
             let sortedBreakdown = self.sortedModelBreakdowns(breakdown)
-            entries.append(CostUsageDailyReport.Entry(
+            entries.append(TokenUsageDailyReport.Entry(
                 date: dayKey,
                 inputTokens: dayInput > 0 ? dayInput : nil,
                 outputTokens: dayOutput > 0 ? dayOutput : nil,
                 cacheReadTokens: dayCacheRead > 0 ? dayCacheRead : nil,
                 cacheCreationTokens: dayCacheWrite > 0 ? dayCacheWrite : nil,
                 totalTokens: dayTotalTokens > 0 ? dayTotalTokens : nil,
-                costUSD: dayCostSamples > 0 ? Double(dayCostNanos) / Self.costScale : nil,
                 modelsUsed: modelNames,
                 modelBreakdowns: sortedBreakdown))
 
@@ -617,20 +573,17 @@ enum PiSessionCostScanner {
             totalCacheRead += dayCacheRead
             totalCacheWrite += dayCacheWrite
             totalTokens += dayTotalTokens
-            totalCostNanos += dayCostNanos
-            totalCostSamples += dayCostSamples
         }
 
-        guard !entries.isEmpty else { return CostUsageDailyReport(data: [], summary: nil) }
-        return CostUsageDailyReport(
+        guard !entries.isEmpty else { return TokenUsageDailyReport(data: [], summary: nil) }
+        return TokenUsageDailyReport(
             data: entries,
-            summary: CostUsageDailyReport.Summary(
+            summary: TokenUsageDailyReport.Summary(
                 totalInputTokens: totalInput > 0 ? totalInput : nil,
                 totalOutputTokens: totalOutput > 0 ? totalOutput : nil,
                 cacheReadTokens: totalCacheRead > 0 ? totalCacheRead : nil,
                 cacheCreationTokens: totalCacheWrite > 0 ? totalCacheWrite : nil,
-                totalTokens: totalTokens > 0 ? totalTokens : nil,
-                totalCostUSD: totalCostSamples > 0 ? Double(totalCostNanos) / Self.costScale : nil))
+                totalTokens: totalTokens > 0 ? totalTokens : nil))
     }
 
     private static func mergedContributions(
@@ -682,9 +635,7 @@ enum PiSessionCostScanner {
             cacheReadTokens: max(0, a.cacheReadTokens + sign * b.cacheReadTokens),
             cacheWriteTokens: max(0, a.cacheWriteTokens + sign * b.cacheWriteTokens),
             outputTokens: max(0, a.outputTokens + sign * b.outputTokens),
-            totalTokens: max(0, a.totalTokens + sign * b.totalTokens),
-            costNanos: max(0, a.costNanos + Int64(sign) * b.costNanos),
-            costSampleCount: max(0, a.costSampleCount + sign * b.costSampleCount))
+            totalTokens: max(0, a.totalTokens + sign * b.totalTokens))
     }
 
     private static func parseSessionStartFromFilename(_ filename: String) -> Date? {
@@ -734,16 +685,10 @@ enum PiSessionCostScanner {
         return components.date
     }
 
-    private static func sortedModelBreakdowns(_ breakdowns: [CostUsageDailyReport.ModelBreakdown])
-        -> [CostUsageDailyReport.ModelBreakdown]
+    private static func sortedModelBreakdowns(_ breakdowns: [TokenUsageDailyReport.ModelBreakdown])
+        -> [TokenUsageDailyReport.ModelBreakdown]
     {
         breakdowns.sorted { lhs, rhs in
-            let lhsCost = lhs.costUSD ?? -1
-            let rhsCost = rhs.costUSD ?? -1
-            if lhsCost != rhsCost {
-                return lhsCost > rhsCost
-            }
-
             let lhsTokens = lhs.totalTokens ?? -1
             let rhsTokens = rhs.totalTokens ?? -1
             if lhsTokens != rhsTokens {

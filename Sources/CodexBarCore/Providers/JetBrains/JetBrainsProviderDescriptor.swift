@@ -27,9 +27,9 @@ public enum JetBrainsProviderDescriptor {
                 iconStyle: .jetbrains,
                 iconResourceName: "ProviderIcon-jetbrains",
                 color: ProviderColor(red: 255 / 255, green: 51 / 255, blue: 153 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: false,
-                noDataMessage: { "JetBrains AI cost summary is not supported." }),
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: false,
+                noDataMessage: { "JetBrains AI token history is not supported." }),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .cli],
                 pipeline: ProviderFetchPipeline(resolveStrategies: { _ in [JetBrainsStatusFetchStrategy()] })),

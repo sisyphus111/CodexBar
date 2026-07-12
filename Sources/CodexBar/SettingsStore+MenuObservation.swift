@@ -19,7 +19,7 @@ extension SettingsStore {
         _ = self.historicalTrackingEnabled
         _ = self.showAllTokenAccountsInMenu
         _ = self.menuBarMetricPreferencesRaw
-        _ = self.costUsageEnabled
+        _ = self.tokenUsageEnabled
         _ = self.hidePersonalInfo
         _ = self.randomBlinkEnabled
         _ = self.confettiOnWeeklyLimitResetsEnabled

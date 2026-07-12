@@ -168,11 +168,11 @@ extension SettingsStore {
         }
     }
 
-    var costUsageEnabled: Bool {
-        get { self.defaultsState.costUsageEnabled }
+    var tokenUsageEnabled: Bool {
+        get { self.defaultsState.tokenUsageEnabled }
         set {
-            self.defaultsState.costUsageEnabled = newValue
-            self.userDefaults.set(newValue, forKey: "tokenCostUsageEnabled")
+            self.defaultsState.tokenUsageEnabled = newValue
+            self.userDefaults.set(newValue, forKey: "tokenUsageEnabled")
         }
     }
 

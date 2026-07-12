@@ -359,7 +359,7 @@ private func makeCodexProviderSpec(
         id: .codex,
         metadata: baseDescriptor.metadata,
         branding: baseDescriptor.branding,
-        tokenCost: baseDescriptor.tokenCost,
+        tokenUsage: baseDescriptor.tokenUsage,
         fetchPlan: ProviderFetchPlan(
             sourceModes: [.auto, .cli, .oauth],
             pipeline: ProviderFetchPipeline { _ in [strategy] }),

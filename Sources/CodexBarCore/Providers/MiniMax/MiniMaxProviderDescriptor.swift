@@ -28,9 +28,9 @@ public enum MiniMaxProviderDescriptor {
                 iconStyle: .minimax,
                 iconResourceName: "ProviderIcon-minimax",
                 color: ProviderColor(red: 254 / 255, green: 96 / 255, blue: 60 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: false,
-                noDataMessage: { "MiniMax cost summary is not supported." }),
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: false,
+                noDataMessage: { "MiniMax token history is not supported." }),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .web, .api],
                 pipeline: ProviderFetchPipeline(resolveStrategies: self.resolveStrategies)),

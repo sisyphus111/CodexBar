@@ -29,9 +29,9 @@ public enum GeminiProviderDescriptor {
                 iconStyle: .gemini,
                 iconResourceName: "ProviderIcon-gemini",
                 color: ProviderColor(red: 171 / 255, green: 135 / 255, blue: 234 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: false,
-                noDataMessage: { "Gemini cost summary is not supported." }),
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: false,
+                noDataMessage: { "Gemini token history is not supported." }),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .api],
                 pipeline: ProviderFetchPipeline(resolveStrategies: { _ in [GeminiStatusFetchStrategy()] })),

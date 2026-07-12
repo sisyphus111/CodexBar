@@ -1,22 +1,22 @@
 import Foundation
 
 extension SettingsStore {
-    func applyTokenCostDefaultIfNeeded() {
+    func applyTokenUsageDefaultIfNeeded() {
         // Settings are persisted in UserDefaults.standard.
-        guard UserDefaults.standard.object(forKey: "tokenCostUsageEnabled") == nil else { return }
+        guard UserDefaults.standard.object(forKey: "tokenUsageEnabled") == nil else { return }
 
         Task { @MainActor [weak self] in
             guard let self else { return }
             let hasSources = await Task.detached(priority: .utility) {
-                Self.hasAnyTokenCostUsageSources()
+                Self.hasAnyTokenUsageSources()
             }.value
             guard hasSources else { return }
-            guard UserDefaults.standard.object(forKey: "tokenCostUsageEnabled") == nil else { return }
-            self.costUsageEnabled = true
+            guard UserDefaults.standard.object(forKey: "tokenUsageEnabled") == nil else { return }
+            self.tokenUsageEnabled = true
         }
     }
 
-    nonisolated static func hasAnyTokenCostUsageSources(
+    nonisolated static func hasAnyTokenUsageSources(
         env: [String: String] = ProcessInfo.processInfo.environment,
         fileManager: FileManager = .default) -> Bool
     {

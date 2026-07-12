@@ -28,9 +28,9 @@ public enum KimiProviderDescriptor {
                 iconStyle: .kimi,
                 iconResourceName: "ProviderIcon-kimi",
                 color: ProviderColor(red: 254 / 255, green: 96 / 255, blue: 60 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: false,
-                noDataMessage: { "Kimi cost summary is not supported." }),
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: false,
+                noDataMessage: { "Kimi token history is not supported." }),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .web],
                 pipeline: ProviderFetchPipeline(resolveStrategies: { _ in [KimiWebFetchStrategy()] })),

@@ -33,9 +33,9 @@ public enum AbacusProviderDescriptor {
                 iconStyle: .abacus,
                 iconResourceName: "ProviderIcon-abacus",
                 color: ProviderColor(red: 56 / 255, green: 189 / 255, blue: 248 / 255)),
-            tokenCost: ProviderTokenCostConfig(
-                supportsTokenCost: false,
-                noDataMessage: { "Abacus AI cost summary is not supported." }),
+            tokenUsage: ProviderTokenUsageConfig(
+                supportsTokenUsage: false,
+                noDataMessage: { "Abacus AI token history is not supported." }),
             fetchPlan: ProviderFetchPlan(
                 sourceModes: [.auto, .web],
                 pipeline: ProviderFetchPipeline(resolveStrategies: { _ in
