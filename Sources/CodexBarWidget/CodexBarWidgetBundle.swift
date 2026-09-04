@@ -6,10 +6,22 @@ struct CodexBarWidgetBundle: WidgetBundle {
     var body: some Widget {
         CodexBarSwitcherWidget()
         CodexBarUsageWidget()
+        CodexBarCodexAccountWidget()
         CodexBarHistoryWidget()
         CodexBarCompactWidget()
         CodexBarBurnDownWidget()
         CodexBarCombinedBurnDownWidget()
+    }
+}
+
+struct CodexBarCodexAccountWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "CodexBarCodexAccountWidget", provider: CodexAccountTimelineProvider()) { entry in
+            CodexAccountWidgetView(entry: entry)
+        }
+        .configurationDisplayName("CodexBar · Codex Account")
+        .description("Session and weekly headroom, pace and reset times for the selected Codex account.")
+        .supportedFamilies([.systemLarge])
     }
 }
 

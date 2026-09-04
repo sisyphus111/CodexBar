@@ -2,6 +2,303 @@ import CodexBarCore
 import SwiftUI
 import WidgetKit
 
+/// The account overview deliberately shows quota headroom, not local API-cost estimates.
+struct CodexAccountWidgetState {
+    let account: WidgetSnapshot.ProviderEntry?
+    let rows: [WidgetUsageRow]
+    let now: Date
+
+    init(snapshot: WidgetSnapshot, now: Date) {
+        self.now = now
+        self.account = snapshot.enabledProviders.contains(.codex)
+            ? snapshot.entries.first { $0.provider == .codex } : nil
+        self.rows = self.account.map { WidgetUsageRow.rows(for: $0, now: now) } ?? []
+    }
+
+    func row(_ id: String) -> WidgetUsageRow {
+        let percent: Double? = if self.account?.usageRows != nil {
+            self.rows.first { $0.id == id }?.percentLeft
+        } else {
+            self.window(id)?.remainingPercent
+        }
+        return WidgetUsageRow(
+            id: id,
+            title: id == "session" ? "Session" : "Weekly",
+            percentLeft: id == "session" && self.weeklyBlocksSession && percent != nil ? 0 : percent)
+    }
+
+    func window(_ id: String) -> RateWindow? {
+        guard let account else { return nil }
+        if let window = account.usageRows?.first(where: { $0.id == id })?.window { return window }
+        // A weekly-only response can occupy primary. Classify by duration before considering its slot.
+        for window in [account.primary, account.secondary].compactMap(\.self)
+            where window.windowMinutes == (id == "session" ? 300 : 10080)
+        {
+            return window
+        }
+        let candidate = id == "session" ? account.primary : account.secondary
+        return candidate?.windowMinutes == nil ? candidate : nil
+    }
+
+    var weeklyBlocksSession: Bool {
+        guard let weekly = self.window("weekly") else { return false }
+        return weekly.remainingPercent <= 0 && (weekly.resetsAt.map { $0 > self.now } ?? true)
+    }
+
+    var visibleQuotaIDs: [String] {
+        ["session", "weekly"].filter { id in
+            self.window(id) != nil || self.rows.contains { $0.id == id }
+        }
+    }
+
+    func paceLabel(_ id: String) -> String? {
+        guard let pace = self.pace(id) else { return nil }
+        let delta = Int(abs(pace.deltaPercent).rounded())
+        switch pace.stage {
+        case .onTrack:
+            return "On pace"
+        case .slightlyAhead, .ahead, .farAhead:
+            return "\(delta)% in deficit"
+        case .slightlyBehind, .behind, .farBehind:
+            return "\(delta)% in reserve"
+        }
+    }
+
+    func projectionLabel(_ id: String) -> String? {
+        guard let pace = self.pace(id) else { return nil }
+        if pace.willLastToReset { return "Lasts until reset" }
+        guard let eta = pace.etaSeconds else { return nil }
+        let countdown = UsageFormatter.resetCountdownDescription(from: self.now.addingTimeInterval(eta), now: self.now)
+        return countdown == "now" ? "Runs out now" : "Runs out \(countdown)"
+    }
+
+    func expectedRemainingPercent(_ id: String) -> Double? {
+        guard let pace = self.pace(id) else { return nil }
+        switch pace.stage {
+        case .onTrack:
+            return nil
+        case .slightlyAhead, .ahead, .farAhead, .slightlyBehind, .behind, .farBehind:
+            return max(0, min(100, 100 - pace.expectedUsedPercent))
+        }
+    }
+
+    func paceIsDeficit(_ id: String) -> Bool {
+        self.pace(id)?.deltaPercent ?? 0 > 0
+    }
+
+    func limitDetail(_ id: String) -> String {
+        let limit = id == "session" ? "5-hour limit" : "7-day limit"
+        guard let window = self.window(id),
+              let reset = UsageFormatter.resetLine(for: window, style: .countdown, now: self.now)
+        else { return limit }
+        return "\(limit) · \(reset)"
+    }
+
+    private func pace(_ id: String) -> UsagePace? {
+        guard let window = self.window(id), window.remainingPercent > 0,
+              let pace = UsagePace.weekly(
+                  window: window,
+                  now: self.now,
+                  defaultWindowMinutes: id == "session" ? 300 : 10080),
+              pace.expectedUsedPercent >= 3 || pace.etaSeconds == 0
+        else { return nil }
+        return pace
+    }
+}
+
+struct CodexAccountWidgetView: View {
+    let entry: CodexBarWidgetEntry
+
+    var body: some View {
+        CodexAccountOverview(state: CodexAccountWidgetState(snapshot: self.entry.snapshot, now: self.entry.date))
+            .containerBackground(.fill.tertiary, for: .widget)
+    }
+}
+
+/// Kept separate from the WidgetKit background so synthetic light/dark previews exercise the real layout.
+struct CodexAccountOverview: View {
+    let state: CodexAccountWidgetState
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Codex")
+                    .font(.headline)
+                Text(self.state.account?.accountDisplayName ?? "Selected account")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .privacySensitive()
+            }
+            if self.state.account != nil {
+                if self.state.visibleQuotaIDs.count == 1, let id = self.state.visibleQuotaIDs.first {
+                    Spacer(minLength: 0)
+                    self.quotaPanel(id)
+                    Spacer(minLength: 0)
+                } else {
+                    ForEach(self.state.visibleQuotaIDs, id: \.self) { id in
+                        self.quotaPanel(id)
+                    }
+                    Spacer(minLength: 0)
+                }
+            } else {
+                Spacer()
+                Image(systemName: "chart.bar.xaxis")
+                    .font(.largeTitle)
+                    .foregroundStyle(WidgetColors.color(for: .codex))
+                Text("Your Codex limits, at a glance")
+                    .font(.headline)
+                Text("Enable Codex and refresh your account in CodexBar to see its usage here.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    private func quotaPanel(_ id: String) -> some View {
+        let row = self.state.row(id)
+        let blocked = id == "session" && self.state.weeklyBlocksSession && row.percentLeft != nil
+        let percent = row.percentLeft.map { max(0, min(100, $0)) }
+        let color = WidgetColors.color(for: .codex)
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(id == "session" ? "Session" : "Weekly")
+                        .font(.subheadline.weight(.semibold))
+                    Text(self.state.limitDetail(id))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+                Spacer()
+                Text(WidgetFormat.percent(percent))
+                    .font(.system(size: 30, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+                Text("left")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            CodexAccountQuotaBar(
+                percent: percent ?? 0,
+                tint: color,
+                pacePercent: self.state.expectedRemainingPercent(id),
+                paceOnTop: !self.state.paceIsDeficit(id))
+            HStack(spacing: 3) {
+                if blocked {
+                    Text("Weekly limit reached")
+                } else if percent == nil {
+                    Text("Usage unavailable")
+                } else if let pace = self.state.paceLabel(id) {
+                    Text(pace)
+                }
+                Spacer(minLength: 8)
+                if !blocked, percent != nil, let projection = self.state.projectionLabel(id) {
+                    Text(projection)
+                }
+            }
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, minHeight: 92, maxHeight: 104)
+        .background(color.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// Mirrors `UsageProgressBar`'s pace-tip geometry: punch out three stripe widths, then fill the center stripe.
+private struct CodexAccountQuotaBar: View {
+    private static let paceStripeCount = 3
+    private static let stripePunchOpacity = 0.9
+
+    let percent: Double
+    let tint: Color
+    let pacePercent: Double?
+    let paceOnTop: Bool
+    @Environment(\.displayScale) private var displayScale
+
+    var body: some View {
+        Canvas { context, size in
+            let scale = max(self.displayScale, 1)
+            let fillPercent = Self.renderedFillPercent(self.percent)
+            let fillWidth = size.width * fillPercent / 100
+            let paceWidth = size.width * Self.clampedPercent(self.pacePercent) / 100
+            let tipWidth = max(25, size.height * 6.5)
+            let stripeInset = 1 / scale
+            let tipOffset = paceWidth - tipWidth + (Self.paceStripeSpan(for: scale) / 2) + stripeInset
+            let rect = CGRect(origin: .zero, size: size)
+            let cornerSize = CGSize(width: size.height / 2, height: size.height / 2)
+
+            context.clip(to: Path(rect))
+            context.fill(
+                Path { $0.addRoundedRect(in: rect, cornerSize: cornerSize) },
+                with: .color(Color.primary.opacity(0.08)))
+            if fillWidth > 0 {
+                let fillRect = CGRect(x: 0, y: 0, width: min(fillWidth, size.width), height: size.height)
+                context.fill(
+                    Path { $0.addRoundedRect(in: fillRect, cornerSize: cornerSize) },
+                    with: .color(self.tint))
+            }
+            if self.pacePercent != nil {
+                let stripes = Self.paceStripePaths(size: CGSize(width: tipWidth, height: size.height), scale: scale)
+                let shift = CGAffineTransform(translationX: tipOffset, y: 0)
+                context.blendMode = .destinationOut
+                context.fill(
+                    stripes.punched.applying(shift),
+                    with: .color(.white.opacity(Self.stripePunchOpacity)))
+                context.blendMode = .normal
+                context.fill(
+                    stripes.center.applying(shift),
+                    with: .color(self.paceOnTop ? .green : .red))
+            }
+        }
+        .frame(height: 6)
+    }
+
+    private static func paceStripeWidth(for scale: CGFloat) -> CGFloat {
+        2
+    }
+
+    private static func paceStripeSpan(for scale: CGFloat) -> CGFloat {
+        self.paceStripeWidth(for: scale) * CGFloat(self.paceStripeCount)
+    }
+
+    private static func paceStripePaths(size: CGSize, scale: CGFloat) -> (punched: Path, center: Path) {
+        let align: (CGFloat) -> CGFloat = { value in (value * scale).rounded() / scale }
+        let stripeWidth = Self.paceStripeWidth(for: scale)
+        let punchWidth = stripeWidth * 3
+        let anchorX = align(size.width - 1 / scale)
+        var punched = Path()
+        var center = Path()
+        guard anchorX - punchWidth >= 0 else { return (punched, center) }
+        let minY = align(-size.height * 2)
+        let maxY = align(size.height * 3)
+        let punchLeft = anchorX - punchWidth
+        punched.addRect(CGRect(x: punchLeft, y: minY, width: punchWidth, height: maxY - minY))
+        let centerLeft = align(punchLeft + (punchWidth - stripeWidth) / 2)
+        center.addRect(CGRect(x: centerLeft, y: minY, width: stripeWidth, height: maxY - minY))
+        return (punched, center)
+    }
+
+    private static func renderedFillPercent(_ percent: Double) -> Double {
+        let clamped = self.clampedPercent(percent)
+        let displayed = Int(clamped.rounded())
+        if displayed <= 0 { return 0 }
+        if displayed >= 100 { return 100 }
+        return clamped
+    }
+
+    private static func clampedPercent(_ percent: Double?) -> Double {
+        min(100, max(0, percent ?? 0))
+    }
+}
+
 extension EnvironmentValues {
     @Entry fileprivate var widgetUsageShowsUsed: Bool = false
 }

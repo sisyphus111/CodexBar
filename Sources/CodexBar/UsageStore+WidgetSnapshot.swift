@@ -287,7 +287,9 @@ extension UsageStore {
             tokenUsage: tokenUsage,
             dailyUsage: dailyUsage,
             providerCost: providerCost,
-            quotaOwnerKey: quotaOwnerKey)
+            quotaOwnerKey: quotaOwnerKey,
+            accountDisplayName: provider == .codex && !self.settings.hidePersonalInfo
+                ? snapshot?.accountEmail(for: .codex) : nil)
     }
 
     private struct PreservedClaudeWidgetUsage {

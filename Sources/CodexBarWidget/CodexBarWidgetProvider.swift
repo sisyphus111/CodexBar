@@ -260,6 +260,27 @@ struct CodexBarCompactTimelineProvider: AppIntentTimelineProvider {
     }
 }
 
+/// Follows the app's selected account. Reading the shared snapshot never switches CLI credentials.
+struct CodexAccountTimelineProvider: TimelineProvider {
+    func placeholder(in context: Context) -> CodexBarWidgetEntry {
+        CodexBarWidgetEntry(date: Date(), provider: .codex, snapshot: WidgetPreviewData.snapshot())
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (CodexBarWidgetEntry) -> Void) {
+        let snapshot = context.isPreview
+            ? WidgetPreviewData.snapshot() : WidgetSnapshotStore.load() ?? WidgetPreviewData.emptySnapshot()
+        completion(CodexBarWidgetEntry(date: Date(), provider: .codex, snapshot: snapshot))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<CodexBarWidgetEntry>) -> Void) {
+        let snapshot = WidgetSnapshotStore.load() ?? WidgetPreviewData.emptySnapshot()
+        let now = Date()
+        let entry = CodexBarWidgetEntry(date: now, provider: .codex, snapshot: snapshot)
+        let refresh = BurnDownRefreshSchedule.nextRefresh(snapshot: snapshot, provider: .codex, now: now)
+        completion(Timeline(entries: [entry], policy: .after(refresh)))
+    }
+}
+
 enum WidgetPreviewData {
     static func emptySnapshot() -> WidgetSnapshot {
         WidgetSnapshot(entries: [], enabledProviders: [], generatedAt: Date())

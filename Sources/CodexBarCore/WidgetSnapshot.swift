@@ -28,6 +28,8 @@ public struct WidgetSnapshot: Codable, Sendable {
         public let dailyUsage: [DailyUsagePoint]
         public let providerCost: ProviderCostSnapshot?
         public let quotaOwnerKey: String?
+        /// Display identity travels with its quota snapshot; widgets never consult live CLI credentials.
+        public let accountDisplayName: String?
 
         public init(
             instanceID: ProviderInstanceID,
@@ -41,7 +43,8 @@ public struct WidgetSnapshot: Codable, Sendable {
             tokenUsage: TokenUsageSummary?,
             dailyUsage: [DailyUsagePoint],
             providerCost: ProviderCostSnapshot? = nil,
-            quotaOwnerKey: String? = nil)
+            quotaOwnerKey: String? = nil,
+            accountDisplayName: String? = nil)
         {
             self.provider = instanceID
             self.updatedAt = updatedAt
@@ -55,6 +58,7 @@ public struct WidgetSnapshot: Codable, Sendable {
             self.dailyUsage = dailyUsage
             self.providerCost = providerCost
             self.quotaOwnerKey = quotaOwnerKey
+            self.accountDisplayName = accountDisplayName
         }
 
         public init(
@@ -69,7 +73,8 @@ public struct WidgetSnapshot: Codable, Sendable {
             tokenUsage: TokenUsageSummary?,
             dailyUsage: [DailyUsagePoint],
             providerCost: ProviderCostSnapshot? = nil,
-            quotaOwnerKey: String? = nil)
+            quotaOwnerKey: String? = nil,
+            accountDisplayName: String? = nil)
         {
             self.init(
                 instanceID: provider.instanceID,
@@ -83,7 +88,8 @@ public struct WidgetSnapshot: Codable, Sendable {
                 tokenUsage: tokenUsage,
                 dailyUsage: dailyUsage,
                 providerCost: providerCost,
-                quotaOwnerKey: quotaOwnerKey)
+                quotaOwnerKey: quotaOwnerKey,
+                accountDisplayName: accountDisplayName)
         }
     }
 

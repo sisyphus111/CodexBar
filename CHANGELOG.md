@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Widgets: add a large Codex account overview with session and weekly headroom, pace, reset countdowns, and privacy-aware account identity.
+
 ## 0.56.4 — 2026-09-03
 
 ### Fixed
